@@ -1,1 +1,2 @@
-export const name: string = 'statofu';
+export * from './Store';
+export * from './types';

@@ -1,0 +1,9 @@
+{
+  "endOfLine": "auto",
+  "printWidth": 100,
+  "singleQuote": true,
+  "importOrder": ["^node:", "<THIRD_PARTY_MODULES>", "^\\."],
+  "importOrderCaseInsensitive": true,
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true
+}
