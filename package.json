@@ -1,0 +1,36 @@
+{
+  "name": "statofu",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=16"
+  },
+  "main": "dist/statofu.cjs.min.js",
+  "module": "dist/statofu.esm.min.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build-all": "run-s build:**",
+    "build:types": "tsc -p additional-configs/tsconfig.types.json",
+    "build:cjs": "rollup --bundleConfigAsCjs -c -f cjs",
+    "build:esm": "rollup --bundleConfigAsCjs -c -f esm",
+    "build:umd": "rollup --bundleConfigAsCjs -c -f umd",
+    "build:umd:bundle": "cross-env BUNDLE=true rollup --bundleConfigAsCjs -c -f umd",
+    "git-clean": "git clean -d -f -x -e node_modules -e package-lock.json"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^24.0.1",
+    "@rollup/plugin-node-resolve": "^15.0.2",
+    "@rollup/plugin-terser": "^0.4.0",
+    "@rollup/plugin-typescript": "^11.1.0",
+    "@types/node": ">=16",
+    "cross-env": "^7.0.3",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^4.4.1",
+    "rollup": "^3.20.2",
+    "tslib": "^2.5.0",
+    "typescript": "^5.0.3"
+  }
+}
