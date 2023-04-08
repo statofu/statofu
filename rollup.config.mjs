@@ -11,12 +11,12 @@ import typescript from '@rollup/plugin-typescript';
 
 const name = 'statofu';
 const outDir = 'dist';
-const bundle = Boolean(process.env.BUNDLE);
+const bundle = process.env.BUNDLE === 'true';
 
 /**
  * @type {RollupOptionsFunction}
  */
-function getRollupConfig(cliArgs) {
+export default (cliArgs) => {
   /** @type {ModuleFormat} */
   const format = cliArgs.format;
 
@@ -37,6 +37,9 @@ function getRollupConfig(cliArgs) {
     plugins: [
       terser({
         format: { comments: false },
+        mangle: {
+          properties: { regex: /^_/ },
+        },
       }),
     ],
   };
@@ -52,6 +55,4 @@ function getRollupConfig(cliArgs) {
       }),
     ].filter(Boolean),
   };
-}
-
-export default getRollupConfig;
+};

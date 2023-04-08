@@ -1,51 +1,67 @@
 import {
+  AnyFn,
   IStatofuStore,
+  Multi,
   OneOrMulti,
-  ParametersExcept0,
-  StatofuChangeListener,
-  StatofuFn,
+  StatofuAnyChangeListener,
+  StatofuClear,
+  StatofuOperate,
+  StatofuSnapshot,
   StatofuState,
+  StatofuStatesChangeListener,
+  StatofuSubscribe,
+  StatofuUnsubscribe,
 } from './types';
-import { arraysEqual } from './utils';
+import { areMultiStates, areSameMultis, isOneState } from './utils';
 
 export class StatofuStore implements IStatofuStore {
-  mapOfState: Map<StatofuState, StatofuState> = new Map();
+  _mapOfState: Map<StatofuState, StatofuState> = new Map();
 
-  mapOfChangeListenersOnOne: Map<StatofuState, StatofuChangeListener<StatofuState>[]> = new Map();
-  mapOf$multis: Map<StatofuState, StatofuState[][]> = new Map();
-  mapOfChangeListenersOnMulti: Map<StatofuState[], StatofuChangeListener<StatofuState[]>[]> =
+  _anyChangeListeners: StatofuAnyChangeListener[] = [];
+  _mapOfOneChangeListeners: Map<StatofuState, StatofuStatesChangeListener<StatofuState>[]> =
     new Map();
+  _mapOf$multis: Map<StatofuState, Multi<StatofuState>[]> = new Map();
+  _mapOfMultiChangeListeners: Map<
+    StatofuState[],
+    StatofuStatesChangeListener<Multi<StatofuState>>[]
+  > = new Map();
 
-  _getState = <TState extends StatofuState>($state: TState): TState => {
-    if (!this.mapOfState.has($state)) {
-      this.mapOfState.set($state, { ...$state });
+  _getOneState = <TState extends StatofuState>($state: TState): TState => {
+    const { _mapOfState } = this;
+    if (!_mapOfState.has($state)) {
+      _mapOfState.set($state, { ...$state });
     }
-    return this.mapOfState.get($state) as TState;
+    return _mapOfState.get($state) as TState;
   };
 
-  _getStatesOnOneOrMulti = <TStates extends OneOrMulti<StatofuState>>(
-    $states: TStates
-  ): TStates => {
-    return Array.isArray($states)
-      ? ($states.map(this._getState) as TStates)
-      : this._getState($states);
+  _getOneOrMultiStates = <TStates extends OneOrMulti<StatofuState>>($states: TStates): TStates => {
+    const { _getOneState } = this;
+    if (areMultiStates($states)) {
+      return $states.map(_getOneState) as TStates;
+    } else if (isOneState($states)) {
+      return _getOneState($states) as TStates;
+    } else {
+      return $states;
+    }
   };
 
-  _setStateOnly = <TState extends StatofuState>($state: TState, state: TState): TState => {
-    this.mapOfState.set($state, state);
+  _setOneStateOnly = <TState extends StatofuState>($state: TState, state: TState): TState => {
+    const { _mapOfState } = this;
+    _mapOfState.set($state, state);
     return state;
   };
 
-  _setStatesOnlyOnOneOrMulti = <TStates extends OneOrMulti<StatofuState>>(
+  _setOneOrMultiStatesOnly = <TStates extends OneOrMulti<StatofuState>>(
     $states: TStates,
     states: TStates
   ): TStates => {
-    if (Array.isArray($states) && Array.isArray(states)) {
+    const { _setOneStateOnly } = this;
+    if (areMultiStates($states) && areMultiStates(states)) {
       for (let i = 0, n = $states.length; i < n; i++) {
-        this._setStateOnly($states[i], states[i]);
+        _setOneStateOnly($states[i], states[i]);
       }
-    } else {
-      this._setStateOnly($states, states);
+    } else if (isOneState($states) && isOneState(states)) {
+      _setOneStateOnly($states, states);
     }
     return states;
   };
@@ -55,187 +71,258 @@ export class StatofuStore implements IStatofuStore {
     newStates: TStates,
     oldStates: TStates
   ): void => {
-    if (Array.isArray($states) && Array.isArray(newStates) && Array.isArray(oldStates)) {
+    const {
+      _anyChangeListeners,
+      _mapOfOneChangeListeners,
+      _mapOf$multis,
+      _mapOfMultiChangeListeners,
+      _getOneState,
+    } = this;
+
+    for (const listener of _anyChangeListeners) {
+      listener();
+    }
+
+    if (areMultiStates($states) && areMultiStates(newStates) && areMultiStates(oldStates)) {
       const visited$multis = new Set<StatofuState[]>();
 
       for (let i = 0, n = $states.length; i < n; i++) {
-        const listenersOnOne = this.mapOfChangeListenersOnOne.get($states[i]);
-        if (!listenersOnOne) continue;
+        const oneChangeListeners = _mapOfOneChangeListeners.get($states[i]);
+        if (!oneChangeListeners) continue;
 
-        for (const listener of listenersOnOne) {
+        for (const listener of oneChangeListeners) {
           listener(newStates[i], oldStates[i]);
         }
 
-        const $multis = this.mapOf$multis.get($states[i]);
+        const $multis = _mapOf$multis.get($states[i]);
         if (!$multis) continue;
 
         for (const $multi of $multis) {
+          if (visited$multis.has($multi)) continue;
+
           visited$multis.add($multi);
 
-          const listenersOnMulti = this.mapOfChangeListenersOnMulti.get($multi);
-          if (!listenersOnMulti) continue;
+          const multiChangeListeners = _mapOfMultiChangeListeners.get($multi);
+          if (!multiChangeListeners) continue;
 
           const newMultiStates = $multi.map(($s) => {
             const i = $states.indexOf($s);
-            return i >= 0 ? newStates[i] : this._getState($s);
-          });
+            return i >= 0 ? newStates[i] : _getOneState($s);
+          }) as Multi<StatofuState>;
           const oldMultiStates = $multi.map(($s) => {
             const i = $states.indexOf($s);
-            return i >= 0 ? oldStates[i] : this._getState($s);
-          });
+            return i >= 0 ? oldStates[i] : _getOneState($s);
+          }) as Multi<StatofuState>;
 
-          for (const listener of listenersOnMulti) {
+          for (const listener of multiChangeListeners) {
             listener(newMultiStates, oldMultiStates);
           }
         }
       }
 
       visited$multis.clear();
-    } else {
-      const listenersOnOne = this.mapOfChangeListenersOnOne.get($states);
-      if (!listenersOnOne) return;
+    } else if (isOneState($states) && isOneState(newStates) && isOneState(oldStates)) {
+      const oneChangeListener = _mapOfOneChangeListeners.get($states);
+      if (!oneChangeListener) return;
 
-      for (const listener of listenersOnOne) {
+      for (const listener of oneChangeListener) {
         listener(newStates, oldStates);
       }
 
-      const $multis = this.mapOf$multis.get($states);
+      const $multis = _mapOf$multis.get($states);
       if (!$multis) return;
 
       for (const $multi of $multis) {
-        const listenersOnMulti = this.mapOfChangeListenersOnMulti.get($multi);
-        if (!listenersOnMulti) continue;
+        const multiChangeListener = _mapOfMultiChangeListeners.get($multi);
+        if (!multiChangeListener) continue;
 
         const newMultiStates = $multi.map(($s) => {
-          return $s === $states ? newStates : this._getState($s);
-        });
+          return $s === $states ? newStates : _getOneState($s);
+        }) as Multi<StatofuState>;
 
         const oldMultiStates = $multi.map(($s) => {
-          return $s === $states ? oldStates : this._getState($s);
-        });
+          return $s === $states ? oldStates : _getOneState($s);
+        }) as Multi<StatofuState>;
 
-        for (const listener of listenersOnMulti) {
+        for (const listener of multiChangeListener) {
           listener(newMultiStates, oldMultiStates);
         }
       }
     }
   };
 
-  snapshot = <TStates extends OneOrMulti<StatofuState>, TFn extends StatofuFn<TStates>>(
+  snapshot: StatofuSnapshot = <TStates extends OneOrMulti<StatofuState>, TFn extends AnyFn>(
     $states: TStates,
-    valueSelector?: TFn
-  ): TStates | ReturnType<TFn> => {
-    const states = this._getStatesOnOneOrMulti($states);
-    return valueSelector ? valueSelector(states) : states;
+    statesGetterOrValueSelector?: TFn,
+    ...payloads: any[]
+  ): any => {
+    const { _getOneOrMultiStates } = this;
+    const states = _getOneOrMultiStates($states);
+    return statesGetterOrValueSelector ? statesGetterOrValueSelector(states, ...payloads) : states;
   };
 
-  operate = <TStates extends OneOrMulti<StatofuState>, TFn extends StatofuFn<TStates, TStates>>(
+  operate: StatofuOperate = <TStates extends OneOrMulti<StatofuState>, TFn extends AnyFn>(
     $states: TStates,
-    statesReducer: TFn,
-    ...payloads: ParametersExcept0<TFn>
+    statesOrStatesGetterOrStatesReducer: TStates | TFn,
+    ...payloads: any[]
   ): TStates => {
-    const oldStates = this._getStatesOnOneOrMulti($states);
-    const newStates = this._setStatesOnlyOnOneOrMulti(
+    const { _getOneOrMultiStates, _setOneOrMultiStatesOnly, _notifyChangeListeners } = this;
+    const oldStates = _getOneOrMultiStates($states);
+    const newStates = _setOneOrMultiStatesOnly(
       $states,
-      statesReducer(oldStates, ...payloads)
+      typeof statesOrStatesGetterOrStatesReducer === 'function'
+        ? statesOrStatesGetterOrStatesReducer(oldStates, ...payloads)
+        : statesOrStatesGetterOrStatesReducer
     );
-    this._notifyChangeListeners($states, newStates, oldStates);
+    _notifyChangeListeners($states, newStates, oldStates);
     return newStates;
   };
 
-  subscribe = <TStates extends OneOrMulti<StatofuState>>(
-    $states: TStates,
-    changeListener: StatofuChangeListener<TStates>
+  subscribe: StatofuSubscribe = <TStates extends OneOrMulti<StatofuState>>(
+    $statesOrAnyChangeListener: TStates | StatofuAnyChangeListener,
+    statesChangeListener?: StatofuStatesChangeListener<TStates>
   ): (() => void) => {
-    if (Array.isArray($states)) {
+    const {
+      _anyChangeListeners,
+      _mapOfOneChangeListeners,
+      _mapOf$multis,
+      _mapOfMultiChangeListeners,
+      unsubscribe,
+    } = this;
+
+    if (areMultiStates($statesOrAnyChangeListener) && statesChangeListener) {
+      const $states = $statesOrAnyChangeListener;
+      const multiChangeListener = statesChangeListener as StatofuStatesChangeListener<
+        Multi<StatofuState>
+      >;
+
       for (const $state of $states) {
-        const $multis = this.mapOf$multis.get($state) ?? [];
+        const $multis = _mapOf$multis.get($state) ?? [];
         if (!$multis.includes($states)) {
           $multis.push($states);
         }
-        this.mapOf$multis.set($state, $multis);
+        _mapOf$multis.set($state, $multis);
       }
-      const listenerOnMulti = changeListener as StatofuChangeListener<StatofuState[]>;
-      const listeners = this.mapOfChangeListenersOnMulti.get($states) ?? [];
-      if (!listeners.includes(listenerOnMulti)) {
-        listeners.push(listenerOnMulti);
+      const listeners = _mapOfMultiChangeListeners.get($states) ?? [];
+      if (!listeners.includes(multiChangeListener)) {
+        listeners.push(multiChangeListener);
       }
-      this.mapOfChangeListenersOnMulti.set($states, listeners);
-    } else {
-      const listenerOnOne = changeListener as StatofuChangeListener<StatofuState>;
-      const listeners = this.mapOfChangeListenersOnOne.get($states) ?? [];
-      if (listeners.includes(listenerOnOne)) {
-        listeners.push(listenerOnOne);
+      _mapOfMultiChangeListeners.set($states, listeners);
+
+      return () => unsubscribe($states, statesChangeListener);
+    } else if (isOneState($statesOrAnyChangeListener) && statesChangeListener) {
+      const $state = $statesOrAnyChangeListener;
+      const oneChangelistener = statesChangeListener as StatofuStatesChangeListener<StatofuState>;
+
+      const listeners = _mapOfOneChangeListeners.get($state) ?? [];
+      if (!listeners.includes(oneChangelistener)) {
+        listeners.push(oneChangelistener);
       }
-      listeners.push(listenerOnOne);
-      this.mapOfChangeListenersOnOne.set($states, listeners);
+      _mapOfOneChangeListeners.set($state, listeners);
+
+      return () => unsubscribe($state, statesChangeListener);
+    } else if (typeof $statesOrAnyChangeListener === 'function') {
+      const anyChangeListener = $statesOrAnyChangeListener;
+      if (!_anyChangeListeners.includes(anyChangeListener)) {
+        _anyChangeListeners.push(anyChangeListener);
+      }
+      return () => unsubscribe(anyChangeListener);
     }
-    return () => this.unsubscribe($states, changeListener);
+    return () => {};
   };
 
-  unsubscribe = <TStates extends OneOrMulti<StatofuState>>(
-    $states: TStates,
-    changeListener?: StatofuChangeListener<TStates>
+  unsubscribe: StatofuUnsubscribe = <TStates extends OneOrMulti<StatofuState>>(
+    $statesOrAnyChangeListener?: TStates | StatofuAnyChangeListener,
+    statesChangeListener?: StatofuStatesChangeListener<TStates>
   ): void => {
-    if (Array.isArray($states)) {
+    const {
+      _anyChangeListeners,
+      _mapOfOneChangeListeners,
+      _mapOf$multis,
+      _mapOfMultiChangeListeners,
+    } = this;
+    if (areMultiStates($statesOrAnyChangeListener)) {
+      const $states = $statesOrAnyChangeListener;
       for (const $state of $states) {
-        const $multis = this.mapOf$multis.get($state);
+        const $multis = _mapOf$multis.get($state);
         if ($multis) {
           for (const $multi of $multis) {
-            if (!arraysEqual($states, $multi)) continue;
+            if (!areSameMultis($states, $multi)) continue;
 
-            const listenersOnMulti = this.mapOfChangeListenersOnMulti.get($multi);
-            if (listenersOnMulti) {
-              if (changeListener) {
-                const i = listenersOnMulti.indexOf(
-                  changeListener as StatofuChangeListener<StatofuState[]>
+            const multiChangeListeners = _mapOfMultiChangeListeners.get($multi);
+            if (multiChangeListeners) {
+              if (statesChangeListener) {
+                const i = multiChangeListeners.indexOf(
+                  statesChangeListener as StatofuStatesChangeListener<Multi<StatofuState>>
                 );
                 if (i >= 0) {
-                  listenersOnMulti.splice(i, 1);
-                  if (listenersOnMulti.length >= 0) {
-                    this.mapOfChangeListenersOnMulti.set($multi, listenersOnMulti);
+                  multiChangeListeners.splice(i, 1);
+                  if (multiChangeListeners.length >= 0) {
+                    _mapOfMultiChangeListeners.set($multi, multiChangeListeners);
                   } else {
-                    this.mapOfChangeListenersOnMulti.delete($multi);
+                    _mapOfMultiChangeListeners.delete($multi);
                   }
                 }
               } else {
-                this.mapOfChangeListenersOnMulti.delete($multi);
+                _mapOfMultiChangeListeners.delete($multi);
               }
             }
           }
 
-          const cleaned$multis = $multis.filter(($m) => this.mapOfChangeListenersOnMulti.has($m));
+          const cleaned$multis = $multis.filter(($m) => _mapOfMultiChangeListeners.has($m));
           if (cleaned$multis.length >= 0) {
-            this.mapOf$multis.set($state, cleaned$multis);
+            _mapOf$multis.set($state, cleaned$multis);
           } else {
-            this.mapOf$multis.delete($state);
+            _mapOf$multis.delete($state);
           }
         }
       }
-    } else {
-      const listenersOnOne = this.mapOfChangeListenersOnOne.get($states);
-      if (listenersOnOne) {
-        if (changeListener) {
-          const i = listenersOnOne.indexOf(changeListener as StatofuChangeListener<StatofuState>);
+    } else if (isOneState($statesOrAnyChangeListener)) {
+      const $state = $statesOrAnyChangeListener;
+      const oneChangeListeners = _mapOfOneChangeListeners.get($state);
+      if (oneChangeListeners) {
+        if (statesChangeListener) {
+          const i = oneChangeListeners.indexOf(
+            statesChangeListener as StatofuStatesChangeListener<StatofuState>
+          );
           if (i >= 0) {
-            listenersOnOne.splice(i, 1);
-            if (listenersOnOne.length >= 0) {
-              this.mapOfChangeListenersOnOne.set($states, listenersOnOne);
+            oneChangeListeners.splice(i, 1);
+            if (oneChangeListeners.length >= 0) {
+              _mapOfOneChangeListeners.set($state, oneChangeListeners);
             } else {
-              this.mapOfChangeListenersOnOne.delete($states);
+              _mapOfOneChangeListeners.delete($state);
             }
           }
         } else {
-          this.mapOfChangeListenersOnOne.delete($states);
+          _mapOfOneChangeListeners.delete($state);
         }
       }
+    } else if (typeof $statesOrAnyChangeListener === 'function') {
+      const anyChangeListener = $statesOrAnyChangeListener;
+      const i = _anyChangeListeners.indexOf(anyChangeListener);
+      if (i >= 0) {
+        _anyChangeListeners.splice(i, 1);
+      }
+    } else if ($statesOrAnyChangeListener === undefined) {
+      _anyChangeListeners.splice(0, _anyChangeListeners.length);
+      _mapOfOneChangeListeners.clear();
+      _mapOf$multis.clear();
+      _mapOfMultiChangeListeners.clear();
     }
   };
 
-  clear(): void {
-    this.mapOfState.clear();
-    this.mapOfChangeListenersOnOne.clear();
-    this.mapOf$multis.clear();
-    this.mapOfChangeListenersOnMulti.clear();
-  }
+  clear: StatofuClear = (): void => {
+    const {
+      _mapOfState,
+      _anyChangeListeners,
+      _mapOfOneChangeListeners,
+      _mapOf$multis,
+      _mapOfMultiChangeListeners,
+    } = this;
+    _mapOfState.clear();
+    _anyChangeListeners.splice(0, this._anyChangeListeners.length);
+    _mapOfOneChangeListeners.clear();
+    _mapOf$multis.clear();
+    _mapOfMultiChangeListeners.clear();
+  };
 }

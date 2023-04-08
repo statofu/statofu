@@ -18,7 +18,10 @@
     "build:esm": "rollup --bundleConfigAsCjs -c -f esm",
     "build:umd": "rollup --bundleConfigAsCjs -c -f umd",
     "build:umd:bundle": "cross-env BUNDLE=true rollup --bundleConfigAsCjs -c -f umd",
-    "git-clean": "git clean -d -f -x -e node_modules -e package-lock.json"
+    "git-clean": "git clean -d -f -x -e node_modules -e package-lock.json",
+    "test:unit": "cross-env TYPE=unit jest",
+    "test:tsd": "tsd -f src/**/*.test-d.ts",
+    "test:e2e": "cross-env TYPE=e2e jest"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^24.0.1",
@@ -26,12 +29,16 @@
     "@rollup/plugin-terser": "^0.4.0",
     "@rollup/plugin-typescript": "^11.1.0",
     "@trivago/prettier-plugin-sort-imports": "^4.1.1",
+    "@types/jest": "^29.5.0",
     "@types/node": ">=16",
     "cross-env": "^7.0.3",
+    "jest": "^29.5.0",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.8.7",
     "rimraf": "^4.4.1",
     "rollup": "^3.20.2",
+    "ts-jest": "^29.1.0",
+    "tsd": "^0.28.1",
     "tslib": "^2.5.0",
     "typescript": "^5.0.3"
   }
