@@ -1,14 +1,24 @@
-import { Multi, StatofuState } from './types';
+import type { Multi, StatofuState } from './types';
 
-export function isOneState(o: any): o is StatofuState {
-  return o !== null && typeof o === 'object';
+const { isArray } = Array;
+
+export function isValidOneState(o: any): o is StatofuState {
+  return typeof o === 'object' && o !== null && !isArray(o);
 }
 
-export function areMultiStates(o: any): o is Multi<StatofuState> {
-  return Array.isArray(o) && Boolean(o[0]);
+export function areValidMultiStates(m: any): m is Multi<StatofuState> {
+  return (
+    isArray(m) &&
+    m.length > 0 &&
+    m.reduce((acc, o) => acc && isValidOneState(o) && isUniqueInArray(o, m), true)
+  );
 }
 
-export function areSameMultis(a: any[], b: any[]): boolean {
+export function isUniqueInArray(o: any, arr: any[]): boolean {
+  return arr.filter((x) => x === o).length === 1;
+}
+
+export function areSameArrays(a: any[], b: any[]): boolean {
   if (a === b) return true;
 
   if (a.length !== b.length) return false;
@@ -18,4 +28,10 @@ export function areSameMultis(a: any[], b: any[]): boolean {
   }
 
   return true;
+}
+
+export const ERR_MSG_INVALID_STATES = 'Invalid statofu states';
+
+export function throwErrOfInvalidStates(): never {
+  throw new Error(ERR_MSG_INVALID_STATES);
 }

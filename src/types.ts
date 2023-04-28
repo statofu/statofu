@@ -1,12 +1,9 @@
-/**
- * A state or a state config in statofu is any object other than an array.
- */
-export interface StatofuState extends Object {
+export interface StatofuState {
   [k: keyof any]: any;
   length?: never;
 }
 
-export interface IStatofuStore {
+export interface StatofuStore {
   snapshot: StatofuSnapshot;
   operate: StatofuOperate;
   subscribe: StatofuSubscribe;
@@ -48,7 +45,7 @@ export interface StatofuOperate {
 }
 
 export interface StatofuSubscribe {
-  (anyChangeListener: StatofuAnyChangeListener): () => void;
+  (anyStateChangeListener: StatofuAnyStateChangeListener): () => void;
   <TStates extends OneOrMulti<StatofuState>>(
     $states: TStates,
     statesChangeListener: StatofuStatesChangeListener<TStates>
@@ -57,7 +54,7 @@ export interface StatofuSubscribe {
 
 export interface StatofuUnsubscribe {
   (): void;
-  (anyChangeListener: StatofuAnyChangeListener): void;
+  (anyStateChangeListener: StatofuAnyStateChangeListener): void;
   <TStates extends OneOrMulti<StatofuState>>(
     $states: TStates,
     statesChangeListener?: StatofuStatesChangeListener<TStates>
@@ -82,7 +79,7 @@ export type StatofuStatesReducer<
   TPayloads extends [...any[]]
 > = (states: TStates, ...payloads: TPayloads) => TStates;
 
-export type StatofuAnyChangeListener = () => void;
+export type StatofuAnyStateChangeListener = StatofuStatesChangeListener<OneOrMulti<StatofuState>>;
 
 export type StatofuStatesChangeListener<TStates extends OneOrMulti<StatofuState>> = (
   newStates: TStates,

@@ -1,6 +1,13 @@
 import { expectType } from 'tsd';
 
-import { Multi, StatofuOperate, StatofuSnapshot, StatofuState } from './types';
+import type {
+  Multi,
+  OneOrMulti,
+  StatofuOperate,
+  StatofuSnapshot,
+  StatofuState,
+  StatofuSubscribe,
+} from './types';
 
 const someStr: string = '';
 const someNum: number = 0;
@@ -243,5 +250,40 @@ const $b: B = { b: someStr };
     },
     someStr,
     someNum
+  );
+})();
+
+(function _test_subscribe() {
+  const subscribe: StatofuSubscribe = () => undo;
+  const undo = () => {};
+
+  expectType<typeof undo>(
+    subscribe((newStates, oldStates) => {
+      expectType<OneOrMulti<StatofuState>>(newStates);
+      expectType<OneOrMulti<StatofuState>>(oldStates);
+    })
+  );
+
+  expectType<typeof undo>(
+    subscribe($a, (newA, oldA) => {
+      expectType<A>(newA);
+      expectType<A>(oldA);
+    })
+  );
+
+  expectType<typeof undo>(
+    subscribe([$a], ([newA], [oldA]) => {
+      expectType<A>(newA);
+      expectType<A>(oldA);
+    })
+  );
+
+  expectType<typeof undo>(
+    subscribe([$a, $b], ([newA, newB], [oldA, oldB]) => {
+      expectType<A>(newA);
+      expectType<B>(newB);
+      expectType<A>(oldA);
+      expectType<B>(oldB);
+    })
   );
 })();
