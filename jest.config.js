@@ -9,7 +9,7 @@ const isE2E = process.env.TYPE === 'e2e';
 const presetObj = isUnittest ? tsPreset : isE2E ? { ...tsPreset, ...puppeteerPreset } : {};
 
 const testPath = isUnittest ? '<rootDir>/src' : isE2E ? '<rootDir>/e2e' : '<rootDir>';
-const testPatterns = ['**/__tests__/**/*.[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)'];
+const testPatterns = ['**/__tests__/**/*.?([cm])[jt]s', '**/?(*.)+(spec|test).?([cm])[jt]s'];
 const testMatch = testPatterns.map((testPattern) => `${testPath}/${testPattern}`);
 
 const maxWorkers = isUnittest ? '75%' : isE2E ? 1 : '50%';
@@ -24,7 +24,7 @@ const globalSetup = isE2E ? '<rootDir>/additional-configs/jestGlobalSetupE2E.ts'
 const globalTeardown = isE2E ? '<rootDir>/additional-configs/jestGlobalTeardownE2E.ts' : undefined;
 
 if (isE2E) {
-  process.env.JEST_PUPPETEER_CONFIG = path.resolve('additional-configs/jest-puppeteerrc.json');
+  process.env.JEST_PUPPETEER_CONFIG = path.resolve('additional-configs/.jest-puppeteerrc.json');
 }
 
 /**

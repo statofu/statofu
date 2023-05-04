@@ -699,7 +699,9 @@ describe('coexisting listeners on different states changes only get called on th
         multiStateChangeListeners.onOtherMultiIntersectingWithTheChangedInTheMulti
       ).toHaveBeenCalledOnce();
       expect(anyStateChangeListener).toHaveBeenCalledOnce();
-      expect(oneStateChangeListeners.onSomeOneContainedByTheChangedInTheMulti);
+      expect(
+        oneStateChangeListeners.onSomeOneContainedByTheChangedInTheMulti
+      ).toHaveBeenCalledOnce();
 
       expect(
         multiStateChangeListeners.onOtherMultiOnlyIntersectingWithTheUnchangedInTheMulti

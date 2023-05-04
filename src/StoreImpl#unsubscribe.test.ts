@@ -306,7 +306,7 @@ describe('unsubscribing multi-state changes', () => {
         [{ a: 'a++' }, { b: 'b++' }, { c: 'c++' }, { d: 'd++' }, { e: 'e++' }]
       );
       expect(multiStateChangeListeners.specifiedOnTheMulti).not.toHaveBeenCalled();
-      expect(multiStateChangeListeners.otherOnTheMulti).toHaveBeenCalledOnce;
+      expect(multiStateChangeListeners.otherOnTheMulti).toHaveBeenCalledOnce();
       expect(multiStateChangeListeners.onOtherMultiIntersectingWithTheMulti).toHaveBeenCalledOnce();
       expect(
         multiStateChangeListeners.onOtherMultiNotIntersectingWithTheMulti

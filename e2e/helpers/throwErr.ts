@@ -1,10 +1,12 @@
 import { SpawnSyncReturns } from 'node:child_process';
+import os from 'node:os';
 
 export function throwErrIfNpmErr(
   spawnSyncReturns: SpawnSyncReturns<Buffer> | SpawnSyncReturns<string>,
   errorMessage: string
 ): void {
-  if (spawnSyncReturns.stderr.toString().includes('ERR!')) {
-    throw new Error(errorMessage);
+  const errStr = spawnSyncReturns.stderr.toString();
+  if (errStr.includes('ERR!')) {
+    throw new Error(`${errorMessage}:${os.EOL}  ${errStr}`);
   }
 }

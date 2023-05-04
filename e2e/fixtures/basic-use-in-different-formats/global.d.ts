@@ -1,4 +1,4 @@
-const statofu: typeof import('statofu');
+var statofu: typeof import('statofu');
 
 interface A {
   a: string;

@@ -1,0 +1,17 @@
+.DS_Store
+.vscode
+
+*.log*
+coverage
+
+dist
+
+node_modules
+package-lock.json
+
+verdaccio/storage
+
+.*ignore
+.git*
+.husky
+htpasswd
