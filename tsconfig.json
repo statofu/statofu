@@ -2,10 +2,9 @@
   "compilerOptions": {
     "allowJs": true,
     "checkJs": true,
-    "declaration": true,
-    "declarationMap": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "importHelpers": true,
     "isolatedModules": true,
     "lib": ["esnext"],
     "module": "esnext",
@@ -19,5 +18,5 @@
     "target": "es2015"
   },
   "include": ["."],
-  "exclude": ["node_modules", "dist", "coverage"]
+  "exclude": ["**/node_modules", "**/dist", "**/coverage", "**/fixtures"]
 }

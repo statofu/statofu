@@ -1,0 +1,21 @@
+# Look here for more config file examples:
+# https://github.com/verdaccio/verdaccio/tree/5.x/conf
+
+storage: ./storage
+
+auth:
+  htpasswd:
+    file: ./htpasswd
+
+uplinks:
+  npmjs:
+    url: https://registry.npmjs.org/
+
+packages:
+  '**':
+    access: $all
+    publish: $authenticated
+    proxy: npmjs
+
+listen:
+  - http://127.0.0.1:7373

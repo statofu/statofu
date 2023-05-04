@@ -1,5 +1,3 @@
-import commonjs from '@rollup/plugin-commonjs';
-import nodeResolve from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 import typescript from '@rollup/plugin-typescript';
 
@@ -9,9 +7,8 @@ import typescript from '@rollup/plugin-typescript';
  * @typedef {import("rollup").OutputOptions} OutputOptions
  */
 
-const name = 'statofu';
-const outDir = 'dist';
-const bundle = process.env.BUNDLE === 'true';
+const pkgName = 'statofu';
+const outputDir = 'dist';
 
 /**
  * @type {RollupOptionsFunction}
@@ -20,20 +17,29 @@ export default (cliArgs) => {
   /** @type {ModuleFormat} */
   const format = cliArgs.format;
 
-  const outputFilename = `${name}.${format}${bundle ? '.bundle' : ''}`;
+  const outputFilename = `${pkgName}.${format}`;
 
   /** @type {OutputOptions} */
   const outputNormal = {
-    file: `${outDir}/${outputFilename}.js`,
+    file: `${outputDir}/${outputFilename}.js`,
     format,
-    name,
+    name: pkgName,
     sourcemap: true,
+    plugins: [
+      terser({
+        format: { comments: false, beautify: true },
+        compress: false,
+        mangle: false,
+      }),
+    ],
   };
 
   /** @type {OutputOptions} */
   const outputCompressed = {
-    ...outputNormal,
-    file: `${outDir}/${outputFilename}.min.js`,
+    file: `${outputDir}/${outputFilename}.min.js`,
+    format,
+    name: pkgName,
+    sourcemap: true,
     plugins: [
       terser({
         format: { comments: false },
@@ -48,11 +54,11 @@ export default (cliArgs) => {
     input: 'src/index.ts',
     output: [outputNormal, outputCompressed],
     plugins: [
-      bundle && nodeResolve(),
-      bundle && commonjs(),
       typescript({
-        tsconfig: 'additional-configs/tsconfig.rollup.json',
+        compilerOptions: {
+          ...(format === 'umd' ? { target: 'es5' } : {}),
+        },
       }),
-    ].filter(Boolean),
+    ],
   };
 };
