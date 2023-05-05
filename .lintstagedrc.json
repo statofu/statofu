@@ -1,3 +1,3 @@
 {
-  "**/*.@((?([cm])js)|json)": ["eslint", "prettier --check"]
+  "**/*.@((?([cm])js)|ts|json|(y?(a)ml))": ["eslint", "prettier --check"]
 }

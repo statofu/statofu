@@ -29,4 +29,4 @@ jobs:
       - env:
           NPM_TOKEN: ${{secrets.SL_NPM_TOKEN}}
           GITHUB_TOKEN: ${{secrets.SL_GITHUB_TOKEN}}
-        run: npx semantic-release@21
+        run: npx -y semantic-release@21

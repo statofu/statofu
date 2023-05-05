@@ -9,12 +9,14 @@ const isE2E = process.env.TYPE === 'e2e';
 const presetObj = isUnittest ? tsPreset : isE2E ? { ...tsPreset, ...puppeteerPreset } : {};
 
 const testPath = isUnittest ? 'src' : isE2E ? 'e2e' : undefined;
-const testRegex = ['__test__/.*\\.[cm]?[jt]s$', '(.*\\.)?(test|spec)\\.[cm]?[jt]s$'].map((s) => {
-  if (testPath) {
-    s = `${testPath}/(.*/)*${s}`;
+const testRegex = ['__test__/.*\\.([cm]?js|ts)$', '(.*\\.)?(test|spec)\\.([cm]?js|ts)$'].map(
+  (s) => {
+    if (testPath) {
+      s = `${testPath}/(.*/)*${s}`;
+    }
+    return s;
   }
-  return s;
-});
+);
 
 const maxWorkers = isUnittest ? '75%' : isE2E ? 1 : undefined;
 
