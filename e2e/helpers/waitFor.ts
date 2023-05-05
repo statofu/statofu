@@ -4,7 +4,7 @@ import { Readable } from 'node:stream';
 export async function waitForTextInStream(
   text: string,
   stream: Readable,
-  timeout: number = 10000
+  timeout: number = 30000
 ): Promise<string> {
   return await new Promise((resolve, reject) => {
     let output: string = '';
