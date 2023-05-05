@@ -14,5 +14,11 @@ jobs:
         with:
           node-version: lts/*
       - run: npm i
-      - run: npm run build-all
-      - run: npm run unittest
+      - run: npm run unittest -- --coverage
+      - uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: unittest
+          directory: ./coverage
+          verbose: true
+          fail_ci_if_error: true
