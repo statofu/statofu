@@ -17,6 +17,12 @@ jobs:
       - e2e
       - lint-code
     runs-on: ubuntu-latest
+    permissions:
+      # For what each permission scope represents, refer to:
+      # https://docs.github.com/en/rest/overview/permissions-required-for-github-apps
+      contents: write
+      issues: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v3
         with:
