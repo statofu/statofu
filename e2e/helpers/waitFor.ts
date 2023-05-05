@@ -1,3 +1,4 @@
+import os from 'node:os';
 import { Readable } from 'node:stream';
 
 export async function waitForTextInStream(
@@ -17,7 +18,7 @@ export async function waitForTextInStream(
 
       if (chunk === null) {
         done = true;
-        reject(new Error(`Text '${text}' not found`));
+        reject(new Error(`Text '${text}' not found${os.EOL}  ${output}`));
       } else {
         output += chunk.toString();
         if (output.includes(text)) {
@@ -30,7 +31,7 @@ export async function waitForTextInStream(
     setTimeout(() => {
       if (done) return;
       done = true;
-      reject(new Error('Time is out'));
+      reject(new Error(`Time '${timeout}ms' is out:${os.EOL}  ${output}`));
     }, timeout);
   });
 }

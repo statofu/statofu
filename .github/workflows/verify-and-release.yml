@@ -1,0 +1,32 @@
+on:
+  push:
+    branches:
+      - main
+      - latest
+
+jobs:
+  unittest:
+    uses: ./.github/workflows/unittest.yml
+  e2e:
+    uses: ./.github/workflows/e2e.yml
+  lint-code:
+    uses: ./.github/workflows/lint-code.yml
+  release:
+    needs:
+      - unittest
+      - e2e
+      - lint-code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v3
+        with:
+          node-version: lts/*
+      - run: npm i
+      - run: npm run build
+      - env:
+          NPM_TOKEN: ${{secrets.SL_NPM_TOKEN}}
+          GITHUB_TOKEN: ${{secrets.SL_GITHUB_TOKEN}}
+        run: npx -y semantic-release@21

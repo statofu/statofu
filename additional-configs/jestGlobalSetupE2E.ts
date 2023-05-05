@@ -33,9 +33,10 @@ export default async (globalConfig: unknown) => {
     stdoutLog(`Didn't find 'serve' by port '${SERVE_PORT}'`);
   }
   stdoutLog(`Launching 'serve' on port '${SERVE_PORT}'...`);
+  crossSpawn.sync('npm', ['run', 'serve', '--', '--help']);
   const serveProc = crossSpawn('npm', ['run', 'serve']);
   if (serveProc.stdout) {
-    await waitForTextInStream(`:${SERVE_PORT}`, serveProc.stdout);
+    await waitForTextInStream(`:${SERVE_PORT}`, serveProc.stdout, 10000);
   }
   globalThis.e2eGlobal.servePid = serveProc.pid;
   stdoutLog(`Launched 'serve' on port '${SERVE_PORT}' at pid '${serveProc.pid}'`);
@@ -48,9 +49,10 @@ export default async (globalConfig: unknown) => {
     stdoutLog(`Didn't find 'verdaccio' by port '${VERDACCIO_PORT}'`);
   }
   stdoutLog(`Launching 'verdaccio' on port '${VERDACCIO_PORT}'...`);
+  crossSpawn.sync('npm', ['run', 'verdaccio', '--', '--help']);
   const verdaccioProc = crossSpawn('npm', ['run', 'verdaccio']);
   if (verdaccioProc.stdout) {
-    await waitForTextInStream(`:${VERDACCIO_PORT}`, verdaccioProc.stdout);
+    await waitForTextInStream(`:${VERDACCIO_PORT}`, verdaccioProc.stdout, 15000);
   }
   globalThis.e2eGlobal.verdaccioPid = verdaccioProc.pid;
   stdoutLog(`Launched 'verdaccio' on port '${VERDACCIO_PORT}' at pid '${verdaccioProc.pid}'`);
@@ -59,7 +61,8 @@ export default async (globalConfig: unknown) => {
 
   throwErrIfNpmErr(
     crossSpawn.sync('npx', [
-      'npm-cli-login',
+      '-y',
+      'npm-cli-login@1',
       '-u',
       VERDACCIO_U,
       '-p',
