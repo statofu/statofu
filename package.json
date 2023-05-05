@@ -1,7 +1,27 @@
 {
   "name": "statofu",
-  "author": "CgL",
   "version": "0.0.0-semantic-release",
+  "author": "CgL",
+  "description": "States changing predictable without tracking any function bodies. Born for low overall cost of development on state management.",
+  "keywords": [
+    "statofu",
+    "react",
+    "redux",
+    "recoil",
+    "mobx",
+    "state",
+    "management",
+    "predictable",
+    "functional"
+  ],
+  "homepage": "https://github.com/statofu/statofu",
+  "bugs": {
+    "url": "https://github.com/statofu/statofu/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/statofu/statofu.git"
+  },
   "engines": {
     "node": ">=16"
   },
@@ -60,6 +80,7 @@
     "prepare": "run-s git-hooks-install"
   },
   "devDependencies": {
+    "@commitlint/config-conventional": "^17.6.3",
     "@rollup/plugin-terser": "^0.4.0",
     "@rollup/plugin-typescript": "^11.1.0",
     "@trivago/prettier-plugin-sort-imports": "^4.1.1",

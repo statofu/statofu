@@ -1,0 +1,12 @@
+{
+  "branches": [
+    { "name": "main", "channel": "beta", "prerelease": "beta" },
+    { "name": "latest", "channel": "latest" }
+  ],
+  "plugins": [
+    ["@semantic-release/commit-analyzer", { "preset": "conventionalcommits" }],
+    ["@semantic-release/release-notes-generator", { "preset": "conventionalcommits" }],
+    "@semantic-release/npm",
+    "@semantic-release/github"
+  ]
+}
