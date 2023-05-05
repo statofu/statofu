@@ -4,7 +4,7 @@ import { Readable } from 'node:stream';
 export async function waitForTextInStream(
   text: string,
   stream: Readable,
-  timeout: number = 30000
+  timeout: number = 5000
 ): Promise<string> {
   return await new Promise((resolve, reject) => {
     let output: string = '';
@@ -31,7 +31,7 @@ export async function waitForTextInStream(
     setTimeout(() => {
       if (done) return;
       done = true;
-      reject(new Error(`Time is out:${os.EOL}  ${output}`));
+      reject(new Error(`Time '${timeout}ms' is out:${os.EOL}  ${output}`));
     }, timeout);
   });
 }
