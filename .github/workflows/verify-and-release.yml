@@ -25,7 +25,7 @@ jobs:
         with:
           node-version: lts/*
       - run: npm i
-      - run: npm run build
+      - run: npm run build-all
       - env:
           NPM_TOKEN: ${{secrets.SL_NPM_TOKEN}}
           GITHUB_TOKEN: ${{secrets.SL_GITHUB_TOKEN}}
