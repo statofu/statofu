@@ -20,7 +20,7 @@ const webpackConf = {
         use: ['babel-loader', 'ts-loader'],
       },
       {
-        test: /\.(c|m)?js$/,
+        test: /\.[cm]?js$/,
         use: 'babel-loader',
       },
     ],

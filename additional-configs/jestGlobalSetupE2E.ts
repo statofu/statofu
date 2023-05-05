@@ -50,7 +50,7 @@ export default async (globalConfig: unknown) => {
   stdoutLog(`Launching 'verdaccio' on port '${VERDACCIO_PORT}'...`);
   const verdaccioProc = crossSpawn('npm', ['run', 'verdaccio']);
   if (verdaccioProc.stdout) {
-    await waitForTextInStream(`:${VERDACCIO_PORT}`, verdaccioProc.stdout, 10000);
+    await waitForTextInStream(`:${VERDACCIO_PORT}`, verdaccioProc.stdout, 20000);
   }
   globalThis.e2eGlobal.verdaccioPid = verdaccioProc.pid;
   stdoutLog(`Launched 'verdaccio' on port '${VERDACCIO_PORT}' at pid '${verdaccioProc.pid}'`);
@@ -59,7 +59,8 @@ export default async (globalConfig: unknown) => {
 
   throwErrIfNpmErr(
     crossSpawn.sync('npx', [
-      'npm-cli-login',
+      '-y',
+      'npm-cli-login@1',
       '-u',
       VERDACCIO_U,
       '-p',

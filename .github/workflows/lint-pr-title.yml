@@ -17,4 +17,4 @@ jobs:
         with:
           node-version: lts/*
       - run: npm i
-      - run: echo '${{ github.event.pull_request.title }}' | npx @commitlint/cli@17
+      - run: echo '${{ github.event.pull_request.title }}' | npx -y @commitlint/cli@17

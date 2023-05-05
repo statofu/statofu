@@ -8,11 +8,15 @@ const isE2E = process.env.TYPE === 'e2e';
 
 const presetObj = isUnittest ? tsPreset : isE2E ? { ...tsPreset, ...puppeteerPreset } : {};
 
-const testPath = isUnittest ? '<rootDir>/src' : isE2E ? '<rootDir>/e2e' : '<rootDir>';
-const testPatterns = ['**/__tests__/**/*.?([cm])[jt]s', '**/?(*.)+(spec|test).?([cm])[jt]s'];
-const testMatch = testPatterns.map((testPattern) => `${testPath}/${testPattern}`);
+const testPath = isUnittest ? 'src' : isE2E ? 'e2e' : undefined;
+const testRegex = ['__test__/.*\\.[cm]?[jt]s$', '(.*\\.)?(test|spec)\\.[cm]?[jt]s$'].map((s) => {
+  if (testPath) {
+    s = `${testPath}/(.*/)*${s}`;
+  }
+  return s;
+});
 
-const maxWorkers = isUnittest ? '75%' : isE2E ? 1 : '50%';
+const maxWorkers = isUnittest ? '75%' : isE2E ? 1 : undefined;
 
 const setupFilesAfterEnv = isUnittest
   ? ['jest-extended/all']
@@ -32,7 +36,7 @@ if (isE2E) {
  **/
 const jestConf = {
   ...presetObj,
-  testMatch,
+  testRegex,
   maxWorkers,
   setupFilesAfterEnv,
   globalSetup,
