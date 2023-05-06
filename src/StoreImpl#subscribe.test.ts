@@ -26,6 +26,11 @@ interface E {
 }
 const $e: E = { e: 'e' };
 
+interface F {
+  f: string;
+}
+const $f: F = { f: 'f' };
+
 describe('a listener subscribing any-state changes is not called on ...', () => {
   test('on on the one not-yet-saved state snapshotted', () => {
     const store = new StatofuStoreImpl();
@@ -117,61 +122,73 @@ describe('a listener subscribing any-state changes is called once with new state
     );
   });
 
-  describe('on multi states operated and partially changed', () => {
+  describe('on multi states operated and partially changed on more than one', () => {
     test('on no state yet saved to the multi, with copies of the multi $states as the old states', () => {
       const store = new StatofuStoreImpl();
 
       const a1: A = { a: 'a+' };
+      const b1: B = { b: 'b+' };
       const listener = jest.fn((newStates, oldStates) => {
-        expect(newStates).toBeArrayOfSize(2);
-        expect(oldStates).toBeArrayOfSize(2);
+        expect(newStates).toBeArrayOfSize(3);
+        expect(oldStates).toBeArrayOfSize(3);
 
-        const [newA, newB] = newStates;
-        const [oldA, oldB] = oldStates;
+        const [newA, newB, newC] = newStates;
+        const [oldA, oldB, oldC] = oldStates;
 
         expect(newA).toBe(a1);
-        expect(newB).toBe(oldB);
+        expect(newB).toBe(b1);
+        expect(newC).toBe(oldC);
 
         expect(oldA).not.toBe($a);
         expect(oldA).toStrictEqual($a);
         expect(oldB).not.toBe($b);
         expect(oldB).toStrictEqual($b);
+        expect(oldC).not.toBe($c);
+        expect(oldC).toStrictEqual($c);
       });
       store.subscribe(listener);
-      store.operate([$a, $b], ([, b]) => [a1, b]);
+      store.operate([$a, $b, $c], ([, , c]) => [a1, b1, c]);
       expect(listener).toHaveBeenCalledOnce();
     });
 
     test(
-      'on states already saved to the changed in the multi and the unchanged in the multi ' +
-        'by operating and snapshotting, ' +
-        'with the already saved states of the multi as the old states',
+      'on states already saved to parts of the changed in the multi and ' +
+        'parts of the unchanged in the multi separately by operating and snapshotting, ' +
+        'with the already saved parts in the multi plus ' +
+        'copies of the not-yet-saved $parts in the multi as the old states',
       () => {
         const store = new StatofuStoreImpl();
-        const [a1, c1] = store.operate([$a, $c], [{ a: 'a+' }, { c: 'c+' }]);
-        const [b1, d1] = store.snapshot([$b, $d]);
+        const [a1, d1] = store.operate([$a, $d], [{ a: 'a+' }, { d: 'd+' }]);
+        const [b1, e1] = store.snapshot([$b, $e]);
 
         const a2: A = { a: 'a++' };
         const b2: B = { b: 'b++' };
+        const c1: C = { c: 'c+' };
         const listener = jest.fn((newStates, oldStates) => {
-          expect(newStates).toBeArrayOfSize(4);
-          expect(oldStates).toBeArrayOfSize(4);
+          expect(newStates).toBeArrayOfSize(6);
+          expect(oldStates).toBeArrayOfSize(6);
 
-          const [newA, newB, newC, newD] = newStates;
-          const [oldA, oldB, oldC, oldD] = oldStates;
+          const [newA, newB, newC, newD, newE, newF] = newStates;
+          const [oldA, oldB, oldC, oldD, oldE, oldF] = oldStates;
 
           expect(newA).toBe(a2);
           expect(newB).toBe(b2);
-          expect(newC).toBe(oldC);
+          expect(newC).toBe(c1);
           expect(newD).toBe(oldD);
+          expect(newE).toBe(oldE);
+          expect(newF).toBe(oldF);
 
           expect(oldA).toBe(a1);
           expect(oldB).toBe(b1);
-          expect(oldC).toBe(c1);
+          expect(oldC).not.toBe($c);
+          expect(oldC).toStrictEqual($c);
           expect(oldD).toBe(d1);
+          expect(oldE).toBe(e1);
+          expect(oldF).not.toBe($f);
+          expect(oldF).toStrictEqual($f);
         });
         store.subscribe(listener);
-        store.operate([$a, $b, $c, $d], ([, , c, d]) => [a2, b2, c, d]);
+        store.operate([$a, $b, $c, $d, $e, $f], ([, , , d, e, f]) => [a2, b2, c1, d, e, f]);
         expect(listener).toHaveBeenCalledOnce();
       }
     );
@@ -362,61 +379,73 @@ describe('a listener subscribing multi-state changes is not called on ...', () =
 });
 
 describe('a listener subscribing multi-state changes is called once with new states and old states on ...', () => {
-  describe('on the multi states operated and partially changed', () => {
+  describe('on the multi states operated and partially changed on more than one', () => {
     test('on no state yet saved to the multi, with copies of the multi $states as the old states', () => {
       const store = new StatofuStoreImpl();
 
       const a1: A = { a: 'a+' };
+      const b1: B = { b: 'b+' };
       const listener = jest.fn((newStates, oldStates) => {
-        expect(newStates).toBeArrayOfSize(2);
-        expect(oldStates).toBeArrayOfSize(2);
+        expect(newStates).toBeArrayOfSize(3);
+        expect(oldStates).toBeArrayOfSize(3);
 
-        const [newA, newB] = newStates;
-        const [oldA, oldB] = oldStates;
+        const [newA, newB, newC] = newStates;
+        const [oldA, oldB, oldC] = oldStates;
 
         expect(newA).toBe(a1);
-        expect(newB).toBe(oldB);
+        expect(newB).toBe(b1);
+        expect(newC).toBe(oldC);
 
         expect(oldA).not.toBe($a);
         expect(oldA).toStrictEqual($a);
         expect(oldB).not.toBe($b);
         expect(oldB).toStrictEqual($b);
+        expect(oldC).not.toBe($c);
+        expect(oldC).toStrictEqual($c);
       });
-      store.subscribe([$a, $b], listener);
-      store.operate([$a, $b], ([, b]) => [a1, b]);
+      store.subscribe([$a, $b, $c], listener);
+      store.operate([$a, $b, $c], ([, , c]) => [a1, b1, c]);
       expect(listener).toHaveBeenCalledOnce();
     });
 
     test(
-      'on states already saved to the changed in the multi and the unchanged in the multi ' +
-        'by operating and snapshotting, ' +
-        'with the already saved states of the multi as the old states',
+      'on states already saved to parts of the changed in the multi and ' +
+        'parts of the unchanged in the multi separately by operating and snapshotting, ' +
+        'with the already saved parts in the multi plus ' +
+        'copies of the not-yet-saved $parts in the multi as the old states',
       () => {
         const store = new StatofuStoreImpl();
-        const [a1, c1] = store.operate([$a, $c], [{ a: 'a+' }, { c: 'c+' }]);
-        const [b1, d1] = store.snapshot([$b, $d]);
+        const [a1, d1] = store.operate([$a, $d], [{ a: 'a+' }, { d: 'd+' }]);
+        const [b1, e1] = store.snapshot([$b, $e]);
 
         const a2: A = { a: 'a++' };
         const b2: B = { b: 'b++' };
+        const c1: C = { c: 'c+' };
         const listener = jest.fn((newStates, oldStates) => {
-          expect(newStates).toBeArrayOfSize(4);
-          expect(oldStates).toBeArrayOfSize(4);
+          expect(newStates).toBeArrayOfSize(6);
+          expect(oldStates).toBeArrayOfSize(6);
 
-          const [newA, newB, newC, newD] = newStates;
-          const [oldA, oldB, oldC, oldD] = oldStates;
+          const [newA, newB, newC, newD, newE, newF] = newStates;
+          const [oldA, oldB, oldC, oldD, oldE, oldF] = oldStates;
 
           expect(newA).toBe(a2);
           expect(newB).toBe(b2);
-          expect(newC).toBe(oldC);
+          expect(newC).toBe(c1);
           expect(newD).toBe(oldD);
+          expect(newE).toBe(oldE);
+          expect(newF).toBe(oldF);
 
           expect(oldA).toBe(a1);
           expect(oldB).toBe(b1);
-          expect(oldC).toBe(c1);
+          expect(oldC).not.toBe($c);
+          expect(oldC).toStrictEqual($c);
           expect(oldD).toBe(d1);
+          expect(oldE).toBe(e1);
+          expect(oldF).not.toBe($f);
+          expect(oldF).toStrictEqual($f);
         });
-        store.subscribe([$a, $b, $c, $d], listener);
-        store.operate([$a, $b, $c, $d], ([, , c, d]) => [a2, b2, c, d]);
+        store.subscribe([$a, $b, $c, $d, $e, $f], listener);
+        store.operate([$a, $b, $c, $d, $e, $f], ([, , , d, e, f]) => [a2, b2, c1, d, e, f]);
         expect(listener).toHaveBeenCalledOnce();
       }
     );
