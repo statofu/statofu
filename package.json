@@ -2,6 +2,7 @@
   "name": "statofu",
   "version": "0.0.0-semantic-release",
   "author": "CgL",
+  "license": "MIT",
   "description": "States changing predictable without tracking any function bodies. Born for low overall cost of development on state management.",
   "keywords": [
     "statofu",

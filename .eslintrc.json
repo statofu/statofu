@@ -44,7 +44,10 @@
     "**/dist",
     "**/coverage",
     "verdaccio/storage",
-    "**/htpasswd",
-    "**/*.html"
+    "verdaccio/htpasswd",
+    "**/*.html",
+    "**/*.md",
+    "**/*.jpg",
+    "**/LICENSE"
   ]
 }
