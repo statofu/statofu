@@ -12,7 +12,9 @@ package-lock.json
 verdaccio/storage
 verdaccio/htpasswd
 
-.husky
-.*ignore
-.git*
+.*
 !.github
+!.*.json
+
+*.jpg
+LICENSE
