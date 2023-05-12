@@ -19,6 +19,7 @@ const testRegex = ['__test__/.*\\.([cm]?js|ts)$', '(.*\\.)?(test|spec)\\.([cm]?j
 );
 
 const maxWorkers = isUnittest ? '75%' : isE2E ? 1 : undefined;
+const testTimeout = isE2E ? 30000 : undefined;
 
 const setupFilesAfterEnv = isUnittest
   ? ['jest-extended/all']
@@ -40,6 +41,7 @@ const jestConf = {
   ...presetObj,
   testRegex,
   maxWorkers,
+  testTimeout,
   setupFilesAfterEnv,
   globalSetup,
   globalTeardown,
