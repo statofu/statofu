@@ -34,7 +34,7 @@ const { check } = checkboxSlice.actions;
 // By checking `check` is declared in `checkboxSlice`, we know `checkboxSlice` responds to `check` so `check` changes the one state represented by `checkboxSlice`.
 ```
 
-But, when a complicated action changes multi states, what multi states it changes needs to be figured out by tracking what simple actions it invokes and what redcuers/slices respond to the invoked simple actions, which always invovles trakcing function bodies:
+But, when a complicated action changes multi states, what multi states it changes needs to be figured out by tracking what simple actions it invokes and what redcuers/slices respond to the invoked simple actions, which always involves trakcing function bodies:
 
 ```diff
 const checkboxSlice = createSlice({
@@ -230,7 +230,7 @@ const [checkboxState2, textareaState2] = store.snapshot([$checkboxState, $textar
 Data deriving in Statofu is achieved by selectors. A selector is a pure function that processes either one or multi states and optional payloads to return a value as a derived datum:
 
 ```ts
-function selectIsChecked(state: Checkbox): boolean {
+function selectIsChecked(state: CheckboxState): boolean {
   return state.checked;
 }
 
@@ -245,7 +245,7 @@ function selectIsAnyHighlighted([checkboxState, textareaState]: [
   return checkboxState.highlighted || textareaState.highlighted;
 }
 
-const hasText = store.snapshot($textareaState, selectHasText);
+const isChecked = store.snapshot($checkboxState, selectIsChecked);
 const doesTextIncludeLorem = store.snapshot($textareaState, selectDoesTextInclude, 'Lorem');
 const isAnyHighlighted = store.snapshot([$checkboxState, $textareaState], selectIsAnyHighlighted);
 ```
@@ -307,7 +307,11 @@ export interface CheckboxState {
   checked: boolean;
   highlighted: boolean;
 }
-export const $checkboxState = { checked: false, highlighted: false };
+
+export const $checkboxState = {
+  checked: false,
+  highlighted: false,
+};
 
 export function check(state: CheckboxState): CheckboxState {
   return { ...state, checked: true };
@@ -315,7 +319,7 @@ export function check(state: CheckboxState): CheckboxState {
 
 // More reducers ...
 
-export function selectIsChecked(state: Checkbox): boolean {
+export function selectIsChecked(state: CheckboxState): boolean {
   return state.checked;
 }
 
@@ -328,7 +332,11 @@ export interface TextareaState {
   text: string;
   highlighted: boolean;
 }
-export const $textareaState = { text: '', highlighted: false };
+
+export const $textareaState = {
+  text: '',
+  highlighted: false,
+};
 
 export function setText(state: TextareaState, text: string): TextareaState {
   return { ...state, text };
@@ -356,7 +364,7 @@ function onCheckboxToggle(checked: boolean): void {
   if (checked) {
     store.operate($checkboxState, check);
   } else {
-    store.operate($checkboxState, uncheckWithTextCleaned);
+    store.operate([$checkboxState, $textareaState], uncheckWithTextCleaned);
   }
 }
 
@@ -380,7 +388,7 @@ function renderTextarea(/* ... */): Element {
 }
 
 function renderTodoHint(/* ... */): Element {
-  const doesTextIncludeTODO = store.snapshot($textarea, selectDoesTextInclude, 'TODO');
+  const doesTextIncludeTODO = store.snapshot($textareaState, selectDoesTextInclude, 'TODO');
 
   // ...
 }
@@ -484,7 +492,7 @@ export function SomeOtherComponent(): ReactElement {
       if (checked) {
         store.operate($checkboxState, check);
       } else {
-        store.operate($checkboxState, uncheckWithTextCleaned);
+        store.operate([$checkboxState, $textareaState], uncheckWithTextCleaned);
       }
     },
     [store]
@@ -523,12 +531,15 @@ const store = createStatofuStore();
 
 ### `store.operate`
 
-Operates either one or multi states with a reducer and required payloads of the reducer.
+Operates either one or multi states with a reducer and required payloads of the reducer. The latest states are returned.
 
 ```ts
-store.operate($checkboxState, check);
-store.operate($textareaState, setText, 'Lorem ipsum');
-store.operate([$checkboxState, $textareaState], uncheckWithTextCleaned);
+const checkboxState1 = store.operate($checkboxState, check);
+const textareaState1 = store.operate($textareaState, setText, 'Lorem ipsum');
+const [checkboxState2, textareaState2] = store.operate(
+  [$checkboxState, $textareaState],
+  uncheckWithTextCleaned
+);
 ```
 
 ### `store.snapshot`
@@ -540,7 +551,7 @@ const checkboxState1 = store.snapshot($checkboxState);
 const textareaState1 = store.snapshot($textareaState);
 const [checkboxState2, textareaState2] = store.snapshot([$checkboxState, $textareaState]);
 
-const hasText = store.snapshot($textareaState, selectHasText);
+const isChecked = store.snapshot($checkboxState, selectIsChecked);
 const doesTextIncludeLorem = store.snapshot($textareaState, selectDoesTextInclude, 'Lorem');
 const isAnyHighlighted = store.snapshot([$checkboxState, $textareaState], selectIsAnyHighlighted);
 ```
@@ -588,7 +599,7 @@ store.unsubscribe();
 
 ### `store.clear`
 
-Clears everything in a store, including states and listeners, as if it's newly created.
+Clears everything in a store, including states and listeners, as if the store is newly created.
 
 ```ts
 store.clear();
