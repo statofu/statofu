@@ -14,7 +14,7 @@ English | [中文](./README.zh-Hans.md)
 
 Two problems that today's widely-accepted libraries of state management don't actually handle well are (1) predictability of states changing and (2) overall cost of development on use.
 
-Taking an example in React, Redux uses reducers/slices to make one-state changing predictable without tracking function bodies but multi-state changing is not the case. When a simple action changes one state, what one state it changes can be understood clearly by checking what reducer/slice responds to it, which often involves checking delcarative information only:
+Taking an example in React, Redux uses reducers/slices to make one-state changing predictable without tracking logics in function bodies but multi-state changing is not the case. When a simple action changes one state, what one state it changes can be understood clearly by checking what reducer/slice responds to it, which often involves checking delcarative information only:
 
 ```ts
 const checkboxSlice = createSlice({
@@ -31,10 +31,10 @@ const checkboxSlice = createSlice({
 
 const { check } = checkboxSlice.actions;
 
-// By checking `check` is declared in `checkboxSlice`, we know `checkboxSlice` responds to `check` so `check` changes the one state represented by `checkboxSlice`.
+// By checking `check` is declared in `checkboxSlice`, we know, by the design of Redux, `checkboxSlice` responds to `check` so `check` changes the one state represented by `checkboxSlice`.
 ```
 
-But, when a complicated action changes multi states, what multi states it changes needs to be figured out by tracking what simple actions it invokes and what redcuers/slices respond to the invoked simple actions, which always involves trakcing function bodies:
+But, when a complicated action changes multi states, what multi states it changes needs to be tracked out by looking into what simple actions it invokes and what redcuers/slices respond to the invoked simple actions, which always involves trakcing logics in function bodies:
 
 ```diff
 const checkboxSlice = createSlice({
@@ -84,11 +84,11 @@ function uncheckWithTextCleaned(): AppThunk {
 // By tracking `uncheckWithTextCleaned` invokes `uncheck` declared in `checkboxSlice` and `setText` declared in `textareaSlice`, we know `uncheckWithTextCleaned` changes the multi states represented by `checkboxSlice` and `textareaSlice`.
 ```
 
-Without tracking function bodies, the multi states to be changed remain unknown so multi-state changing goes unpredictable. With tracking function bodies, the multi states to be changed get known but overall cost of development on use increases. In addition, when underlying simple actions to be invoked in a complicated action to be built are not yet ready, they need to be built in advance only for it but may never get invoked anywhere else. Then, complicated actions become high-coupling with their underlying reducers/slices, which brings difficulties in development, thus the cost increases further.
+Without tracking logics in function bodies, the multi states to be changed remain unknown so multi-state changing goes unpredictable. With tracking logics in function bodies, the multi states to be changed get known but overall cost of development on use increases. In addition, when underlying simple actions to be invoked in a complicated action to be built are not yet ready, they need to be built in advance only for it but may never get invoked anywhere else. Then, complicated actions become high-coupling with their underlying reducers/slices, which brings difficulties in development, thus the cost increases further.
 
 The problems exist not only in Redux but also in many widely-accepted libraries of state management in React. [A series of articles](https://github.com/licg9999/review-of-state-management-in-react) was written for the clarification. Further more, with a glimpse of the most widely-accepted library of state management in each of different frameworks, the problems are considered to exist universally.
 
-Therefore, Statofu, another framework-agnostic, fast and small library of state management, is built. It's able to make both one-state and multi-state changing predictable without tracking any function bodies. Besides, necessities but only necessities of state management are included so overall cost of development on use decreases in primary aspects. Let's check it out 🌈.
+Therefore, Statofu, another framework-agnostic, fast and small library of state management, is built. It's able to make both one-state and multi-state changing predictable without tracking logics in any function bodies. Besides, necessities but only necessities of state management are included so overall cost of development on use decreases in primary aspects. Let's check it out 🌈.
 
 ## Installation
 
@@ -181,7 +181,7 @@ store.operate([$checkboxState, $textareaState], uncheckWithTextCleaned); // [{ c
 
 A pure function in Statofu behaves as above is a reducer. This reducer is the same concept as in Redux. The difference is, a reducer in Redux handles all kinds of state-changing logics on one state in terms of all kinds of actions, but a reducer in Statofu handles only one kind of state-changing logics on either one or multi states in terms of only one kind of payloads.
 
-As each reducer in Statofu is designed to handle either one-state or multi-state changing as a pure function without any side effects, what states it changes can be understood clearly by checking its function declaration only, which makes both one-state and multi-state changing predictable without tracking any function bodies. As each reducer in Statofu is designed to handle only one kind of state-changing logics in terms of only one kind of payloads, different kinds of state-changing logics can be placed in different reducers separately, which makes state-changing logics well structured easily.
+As each reducer in Statofu is designed to handle either one-state or multi-state changing as a pure function without any side effects, what states it changes can be understood clearly by checking its function declaration only, which makes both one-state and multi-state changing predictable without tracking logics in any function bodies. As each reducer in Statofu is designed to handle only one kind of state-changing logics in terms of only one kind of payloads, different kinds of state-changing logics can be placed in different reducers separately, which makes state-changing logics well structured easily.
 
 By the way, there is no limitation to either the count or the types of payloads in a reducer:
 
