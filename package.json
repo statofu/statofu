@@ -3,7 +3,7 @@
   "version": "0.0.0-semantic-release",
   "author": "CgL",
   "license": "MIT",
-  "description": "States changing predictable without tracking logics in any function bodies. Born for low overall cost of development on state management.",
+  "description": "Predictable state changes at a low cost. Framework-agnostic, fast, and small.",
   "keywords": [
     "statofu",
     "react",
