@@ -2,8 +2,7 @@ import fs from 'node:fs';
 
 import crossSpawn from 'cross-spawn';
 
-import { throwErrIfNpmErr } from './helpers';
-import { PKG_NAME, SERVE_ORIGIN, VERDACCIO_ORIGIN } from './helpers/constants';
+import { PKG_NAME, SERVE_ORIGIN, throwErrIfNpmErr, VERDACCIO_ORIGIN } from './helpers';
 
 const PREV_DIR = process.cwd();
 
@@ -11,7 +10,7 @@ const BASE_DIR = 'e2e/fixtures/basic-use-in-different-formats';
 
 const BASE_URL = `${SERVE_ORIGIN}/${BASE_DIR}`;
 
-const OUTPUT_REG = /"a":"a\+".*"a":"a".*"a":"a\+".*"a":"a\+\+"/;
+const OUTPUT_REG = /"a":"a\+".*"a":"a".*"a":"a\+".*"a":"a\+\+".*"a":"a".*"a":"a\+"/;
 
 beforeAll(() => {
   process.chdir(BASE_DIR);

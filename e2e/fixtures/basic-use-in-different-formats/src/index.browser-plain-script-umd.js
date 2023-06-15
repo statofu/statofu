@@ -1,4 +1,5 @@
 const { createStatofuStore } = statofu;
+const { foldStates, unfoldStates } = statofuSsr;
 
 const elRoot = document.querySelector('#root');
 
@@ -8,6 +9,10 @@ if (!elRoot) {
 
 const store = createStatofuStore();
 
-appLogics.test(store, (a) => {
-  elRoot.innerHTML += JSON.stringify(a) + '<br/>';
+appLogics.testCore(store, (o) => {
+  elRoot.innerHTML += JSON.stringify(o) + '<br/>';
+});
+
+appLogics.testSsr(store, { foldStates, unfoldStates }, (o) => {
+  elRoot.innerHTML += JSON.stringify(o) + '<br/>';
 });

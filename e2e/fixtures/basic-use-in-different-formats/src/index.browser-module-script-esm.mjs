@@ -1,4 +1,5 @@
 import { createStatofuStore } from 'statofu';
+import { foldStates, unfoldStates } from 'statofu/ssr';
 
 import './appLogics.js';
 
@@ -10,6 +11,10 @@ if (!elRoot) {
 
 const store = createStatofuStore();
 
-appLogics.test(store, (a) => {
-  elRoot.innerHTML += JSON.stringify(a) + '<br/>';
+appLogics.testCore(store, (o) => {
+  elRoot.innerHTML += JSON.stringify(o) + '<br/>';
+});
+
+appLogics.testSsr(store, { foldStates, unfoldStates }, (o) => {
+  elRoot.innerHTML += JSON.stringify(o) + '<br/>';
 });
