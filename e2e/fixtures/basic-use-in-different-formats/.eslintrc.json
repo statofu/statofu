@@ -1,6 +1,7 @@
 {
   "globals": {
     "statofu": true,
+    "statofuSsr": true,
     "appLogics": true
   }
 }

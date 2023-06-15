@@ -5,10 +5,10 @@
   const $a = { a: 'a' };
 
   globalThis.appLogics = {
-    test(store, logA) {
+    testCore(store, log) {
       const unsubscribe = store.subscribe($a, (newA, oldA) => {
-        logA(newA);
-        logA(oldA);
+        log(newA);
+        log(oldA);
       });
 
       store.operate($a, { a: 'a+' });
@@ -16,11 +16,23 @@
       unsubscribe();
 
       store.operate($a, (a) => {
-        logA(a);
+        log(a);
         return { a: 'a++' };
       });
 
-      logA(store.snapshot($a));
+      log(store.snapshot($a));
+    },
+
+    testSsr(store, { foldStates, unfoldStates }, log) {
+      store.operate($a, { a: 'a+' });
+
+      const stateFolder = foldStates(store, { $a });
+
+      store.clear();
+
+      log(store.snapshot($a));
+      unfoldStates(store, { $a }, stateFolder);
+      log(store.snapshot($a));
     },
   };
 
