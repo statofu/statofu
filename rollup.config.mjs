@@ -95,12 +95,15 @@ function evaluateOutputFilePrefix(input, format) {
   const { dir, name } = path.parse(path.relative(inputDir, input));
 
   if (isEmpty(dir)) {
-    return path.join(outputDir, `${name === 'index' ? pkgName : name}.${format}`);
+    return path.join(
+      outputDir,
+      `${name === 'index' ? pkgName : path.join(pkgName, name)}.${format}`
+    );
   } else {
     if (name === 'index') {
-      return path.join(outputDir, `${dir}.${format}`);
+      return path.join(outputDir, pkgName, `${dir}.${format}`);
     } else {
-      return path.join(outputDir, dir, `${name}.${format}`);
+      return path.join(outputDir, pkgName, dir, `${name}.${format}`);
     }
   }
 }

@@ -51,20 +51,20 @@
     },
     "./ssr": {
       "types": "./dist/ssr/index.d.ts",
-      "module": "./dist/ssr.esm.js",
-      "default": "./dist/ssr.cjs.js"
+      "module": "./dist/statofu/ssr.esm.js",
+      "default": "./dist/statofu/ssr.cjs.js"
     },
     "./ssr/esm": {
       "types": "./dist/ssr/index.d.ts",
-      "default": "./dist/ssr.esm.js"
+      "default": "./dist/statofu/ssr.esm.js"
     },
     "./ssr/umd": {
       "types": "./dist/ssr/index.d.ts",
-      "default": "./dist/ssr.umd.js"
+      "default": "./dist/statofu/ssr.umd.js"
     },
     "./ssr/cjs": {
       "types": "./dist/ssr/index.d.ts",
-      "default": "./dist/ssr.cjs.js"
+      "default": "./dist/statofu/ssr.cjs.js"
     },
     "./package.json": "./package.json",
     "./dist/*": "./dist/*.js",
