@@ -165,24 +165,117 @@ const $b: B = { b: someStr };
 
   snapshot(
     $a,
-    (a, p1, p2) => {
+    (a, p1: string, p2: number) => {
       expectType<A>(a);
-      expectType<string>(p1);
-      expectType<number>(p2);
+    },
+    someStr,
+    someNum
+  );
+  snapshot(
+    $a,
+    (a, p1: string, p2: number) => {
+      expectType<A>(a);
+    },
+    // @ts-expect-error
+    null,
+    someNum
+  );
+  snapshot(
+    $a,
+    (a, p1: string, p2: number) => {
+      expectType<A>(a);
+    },
+    someStr,
+    // @ts-expect-error
+    null
+  );
+  snapshot(
+    $a,
+    (a, p1: string, p2: number) => {
+      expectType<A>(a);
+    },
+    someStr,
+    someNum,
+    // @ts-expect-error
+    null
+  );
+
+  snapshot(
+    [$a],
+    ([a], p1: string, p2: number) => {
+      expectType<A>(a);
+    },
+    someStr,
+    someNum
+  );
+  snapshot(
+    [$a],
+    ([a], p1: string, p2: number) => {
+      expectType<A>(a);
+    },
+    // @ts-expect-error
+    null,
+    someNum
+  );
+  snapshot(
+    [$a],
+    ([a], p1: string, p2: number) => {
+      expectType<A>(a);
+    },
+    someStr,
+    // @ts-expect-error
+    null
+  );
+  snapshot(
+    [$a],
+    ([a], p1: string, p2: number) => {
+      expectType<A>(a);
+    },
+    someStr,
+    someNum,
+    // @ts-expect-error
+    null
+  );
+
+  snapshot(
+    [$a, $b],
+    ([a, b], p1: string, p2: number) => {
+      expectType<A>(a);
+      expectType<B>(b);
     },
     someStr,
     someNum
   );
   snapshot(
     [$a, $b],
-    ([a, b], p1, p2) => {
+    ([a, b], p1: string, p2: number) => {
       expectType<A>(a);
       expectType<B>(b);
-      expectType<string>(p1);
-      expectType<number>(p2);
+    },
+    // @ts-expect-error
+    null,
+    someNum
+  );
+  snapshot(
+    [$a, $b],
+    ([a, b], p1: string, p2: number) => {
+      expectType<A>(a);
+      expectType<B>(b);
     },
     someStr,
-    someNum
+    // @ts-expect-error
+    null
+  );
+  snapshot(
+    [$a, $b],
+    ([a, b], p1: string, p2: number) => {
+      expectType<A>(a);
+      expectType<B>(b);
+    },
+    someStr,
+    someNum,
+    // @ts-expect-error
+    null
   );
 })();
 
@@ -219,37 +312,129 @@ const $b: B = { b: someStr };
 
   operate(
     $a,
-    (a, p1, p2) => {
+    (a, p1: string, p2: number) => {
       expectType<A>(a);
-      expectType<string>(p1);
-      expectType<number>(p2);
       return a;
     },
     someStr,
     someNum
   );
   operate(
-    [$a],
-    ([a], p1, p2) => {
+    $a,
+    (a, p1: string, p2: number) => {
       expectType<A>(a);
-      expectType<string>(p1);
-      expectType<number>(p2);
+      return a;
+    },
+    // @ts-expect-error
+    null,
+    someNum
+  );
+  operate(
+    $a,
+    (a, p1: string, p2: number) => {
+      expectType<A>(a);
+      return a;
+    },
+    someStr,
+    // @ts-expect-error
+    null
+  );
+  operate(
+    $a,
+    (a, p1: string, p2: number) => {
+      expectType<A>(a);
+      return a;
+    },
+    someStr,
+    someNum,
+    // @ts-expect-error
+    null
+  );
+
+  operate(
+    [$a],
+    ([a], p1: string, p2: number) => {
+      expectType<A>(a);
       return [a];
     },
     someStr,
     someNum
   );
   operate(
+    [$a],
+    ([a], p1: string, p2: number) => {
+      expectType<A>(a);
+      return [a];
+    },
+    // @ts-expect-error
+    null,
+    someNum
+  );
+  operate(
+    [$a],
+    ([a], p1: string, p2: number) => {
+      expectType<A>(a);
+      return [a];
+    },
+    someStr,
+    // @ts-expect-error
+    null
+  );
+  operate(
+    [$a],
+    ([a], p1: string, p2: number) => {
+      expectType<A>(a);
+      return [a];
+    },
+    someStr,
+    someNum,
+    // @ts-expect-error
+    null
+  );
+
+  operate(
     [$a, $b],
     ([a, b], p1, p2) => {
       expectType<A>(a);
       expectType<B>(b);
-      expectType<string>(p1);
-      expectType<number>(p2);
       return [a, b];
     },
     someStr,
     someNum
+  );
+  operate(
+    [$a, $b],
+    ([a, b], p1: string, p2: number) => {
+      expectType<A>(a);
+      expectType<B>(b);
+      return [a, b];
+    },
+    // @ts-expect-error
+    null,
+    someNum
+  );
+  operate(
+    [$a, $b],
+    ([a, b], p1: string, p2: number) => {
+      expectType<A>(a);
+      expectType<B>(b);
+      return [a, b];
+    },
+    someStr,
+    // @ts-expect-error
+    null
+  );
+  operate(
+    [$a, $b],
+    ([a, b], p1: string, p2: number) => {
+      expectType<A>(a);
+      expectType<B>(b);
+      return [a, b];
+    },
+    someStr,
+    someNum,
+    // @ts-expect-error
+    null
   );
 })();
 

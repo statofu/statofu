@@ -67,9 +67,6 @@
       "default": "./dist/statofu/ssr.cjs.js"
     },
     "./package.json": "./package.json",
-    "./dist/*": "./dist/*.js",
-    "./dist/*.js": "./dist/*.js",
-    "./dist/*.ts": "./dist/*.ts",
     "./src/*": "./src/*.ts",
     "./src/*.ts": "./src/*.ts"
   },
