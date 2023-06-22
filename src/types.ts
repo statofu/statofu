@@ -17,14 +17,10 @@ export interface StatofuSnapshot {
     $states: TStates,
     statesGetter: TFn
   ): TStates;
-  <
-    TStates extends OneOrMulti<StatofuState>,
-    TPayloads extends [...any[]],
-    TFn extends StatofuValueSelector<TStates, TPayloads>
-  >(
+  <TStates extends OneOrMulti<StatofuState>, TFn extends StatofuValueSelector<TStates, any>>(
     $states: TStates,
     valueSelector: TFn,
-    ...payloads: TPayloads
+    ...payloads: TFn extends StatofuValueSelector<TStates, [...infer TPayloads]> ? TPayloads : any
   ): ReturnType<TFn>;
 }
 
@@ -33,14 +29,10 @@ export interface StatofuOperate {
     $states: TStates,
     statesOrStatesGetter: TStates | TFn
   ): TStates;
-  <
-    TStates extends OneOrMulti<StatofuState>,
-    TPayloads extends [...any[]],
-    TFn extends StatofuStatesReducer<TStates, TPayloads>
-  >(
+  <TStates extends OneOrMulti<StatofuState>, TFn extends StatofuStatesReducer<TStates, any>>(
     $states: TStates,
     statesReducer: TFn,
-    ...payloads: TPayloads
+    ...payloads: TFn extends StatofuStatesReducer<TStates, [...infer TPayloads]> ? TPayloads : any
   ): TStates;
 }
 
