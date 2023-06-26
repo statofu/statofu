@@ -18,5 +18,12 @@
     "target": "es2015"
   },
   "include": ["."],
-  "exclude": ["**/node_modules", "**/dist", "**/coverage", "**/fixtures", "verdaccio/storage"]
+  "exclude": [
+    "**/node_modules",
+    "**/dist",
+    "**/coverage",
+    "**/fixtures",
+    "ssr",
+    "verdaccio/storage"
+  ]
 }
