@@ -94,16 +94,9 @@ function evaluateInputName(input) {
 function evaluateOutputFilePrefix(input, format) {
   const { dir, name } = path.parse(path.relative(inputDir, input));
 
-  if (isEmpty(dir)) {
-    return path.join(
-      outputDir,
-      `${name === 'index' ? pkgName : path.join(pkgName, name)}.${format}`
-    );
-  } else {
-    if (name === 'index') {
-      return path.join(outputDir, pkgName, `${dir}.${format}`);
-    } else {
-      return path.join(outputDir, pkgName, dir, `${name}.${format}`);
-    }
-  }
+  const parentInfo = isEmpty(dir) ? pkgName : [pkgName, dir].join('-');
+
+  const namePrefix = `${name === 'index' ? parentInfo : [parentInfo, name].join('-')}.${format}`;
+
+  return path.join(outputDir, namePrefix);
 }

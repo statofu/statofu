@@ -25,6 +25,9 @@ const webpackConf = {
       },
     ],
   },
+  resolve: {
+    extensions: ['.ts', '.cjs', '.mjs', '...'],
+  },
 };
 
 module.exports = webpackConf;
