@@ -51,20 +51,20 @@
     },
     "./ssr": {
       "types": "./dist/ssr/index.d.ts",
-      "module": "./dist/statofu-ssr.esm.js",
-      "default": "./dist/statofu-ssr.cjs.js"
+      "module": "./dist/statofu-ssr.esm.min.js",
+      "default": "./dist/statofu-ssr.cjs.min.js"
     },
     "./ssr/esm": {
       "types": "./dist/ssr/index.d.ts",
-      "default": "./dist/statofu-ssr.esm.js"
+      "default": "./dist/statofu-ssr.esm.min.js"
     },
     "./ssr/umd": {
       "types": "./dist/ssr/index.d.ts",
-      "default": "./dist/statofu-ssr.umd.js"
+      "default": "./dist/statofu-ssr.umd.min.js"
     },
     "./ssr/cjs": {
       "types": "./dist/ssr/index.d.ts",
-      "default": "./dist/statofu-ssr.cjs.js"
+      "default": "./dist/statofu-ssr.cjs.min.js"
     },
     "./package.json": "./package.json",
     "./src/*": "./src/*.ts",
@@ -118,6 +118,7 @@
     "eslint-plugin-json": "^3.1.0",
     "eslint-plugin-yaml": "^0.5.0",
     "expect-puppeteer": "^8.0.5",
+    "glob": "^10.3.0",
     "husky": "^8.0.3",
     "jest": "^29.5.0",
     "jest-extended": "^3.2.4",
