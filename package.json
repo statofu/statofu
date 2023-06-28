@@ -6,8 +6,8 @@
   "description": "Predictable state changes at a low cost. Framework-agnostic, fast, and small.",
   "keywords": [
     "statofu",
-    "react",
     "redux",
+    "react",
     "recoil",
     "mobx",
     "state",
