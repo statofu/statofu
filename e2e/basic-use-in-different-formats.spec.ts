@@ -16,6 +16,7 @@ const OUTPUT_REG = /"a":"a\+".*"a":"a".*"a":"a\+".*"a":"a\+\+".*"a":"a".*"a":"a\
 
 beforeAll(() => {
   process.chdir(BASE_DIR);
+
   throwErrIfNpmErr(
     crossSpawn.sync('npm', ['uninstall', '--no-save', PKG_NAME]),
     `Failed to uninstall '${PKG_NAME}'`
@@ -31,14 +32,26 @@ beforeAll(() => {
   );
   appendLogsToStatofuInNodeModules();
   throwErrIfNpmErr(crossSpawn.sync('npx', ['webpack']), 'Webpack failure');
-  throwErrIfNpmErr(
-    crossSpawn.sync('npx', [
-      'webpack',
-      '--config',
-      './obsolete-module-resolution/webpack.config.js',
-    ]),
-    'Webpack failure (obsolete module resolution)'
-  );
+
+  ['obsolete-module-resolution'].forEach((subdir) => {
+    try {
+      fs.rmSync(`${subdir}/dist`, { recursive: true });
+    } catch {}
+    throwErrIfNpmErr(
+      crossSpawn.sync('node', [`${subdir}/scripts/prepare.js`]),
+      `Failed to prepare dir '${subdir}'`
+    );
+    throwErrIfNpmErr(
+      crossSpawn.sync('npx', [
+        'webpack',
+        '--config',
+        `./${subdir}/webpack.config.js`,
+        '--config',
+        `./${subdir}/webpack.merge.config.js`,
+      ]),
+      `Webpack failure (in subdir '${subdir}')`
+    );
+  });
 });
 
 afterAll(() => {
@@ -75,8 +88,10 @@ describe('on node', () => {
   ['import-cjs-by-default', 'require-cjs-by-default'].forEach((fullFormat) => {
     test(`in format '${fullFormat}', runs well with the correct files imported`, () => {
       const { importedFormat, subdirEndingWithSlash, mainFileFormat } = parseFullFormat(fullFormat);
-      const mainPrefix = `${subdirEndingWithSlash}src/index.node-${mainFileFormat}`;
-      const mainFile = [`${mainPrefix}.js`, `${mainPrefix}.mjs`].find((p) => fs.existsSync(p));
+      const mainFilePrefix = `${subdirEndingWithSlash}src/index.node-${mainFileFormat}`;
+      const mainFile = [`${mainFilePrefix}.js`, `${mainFilePrefix}.mjs`].find((p) =>
+        fs.existsSync(p)
+      );
       if (!mainFile) {
         throw new Error('Main file not found');
       }

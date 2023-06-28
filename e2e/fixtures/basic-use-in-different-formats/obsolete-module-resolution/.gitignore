@@ -1,0 +1,4 @@
+src/appLogics.js
+global.d.ts
+jest.config.js
+webpack.config.js
