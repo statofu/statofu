@@ -5,6 +5,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "importHelpers": true,
+    "inlineSources": true,
     "isolatedModules": true,
     "lib": ["esnext"],
     "module": "esnext",
