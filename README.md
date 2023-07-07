@@ -12,19 +12,29 @@ English | [中文](./README.zh-Hans.md)
 
 ## Why Statofu?
 
-One big problem with today's widely accepted state management libraries is that predictable state changes have to come at a high cost. [A detailed article](https://github.com/statofu/statofu-blog/blob/main/20230525/README.en.md) was written for the explaination. Please check it out.
+One big problem with today's widely accepted state management libraries is that predictable state changes have to come at a high cost. [A detailed article](https://github.com/statofu/statofu-blog/blob/main/20230525/README.en.md) was written for the explanation:
 
-Thus, Statofu, another state management library, is built to achieve **predictable state changes at a low cost** 🌈. Besides, it's framework-agnostic, fast, and small.
+> ...
+>
+> Though, Redux is not perfect and has a drawback. If we take a closer look at its unidirectional data flow, `event -> action -> reducer -> state`, it's lengthy. No matter how simple a state change is, always at least one action and at least one reducer are involved. In comparison, a state change in either Recoil or MobX goes much easier. The lengthiness dramatically increases the cost of use in Redux.
+>
+> ...
+
+Statofu is a state management library built to achieve **predictable state changes at a low cost** 🌈. It's framework-agnostic, small and fast.
+
+## Framework Integrations
+
+Statofu provides integrations with mainstream frameworks, including React, Vue, and more. The naming convention of the integration libraries is `statofu-{{framework}}`. Currently, [the React integration, `statofu-react`](https://github.com/statofu/statofu-react), has become available, and please check it out if React is in use. Below is a framework-agnostic guide.
 
 ## Installation
 
 Statofu can be installed by `npm` or any preferred package manager:
 
 ```sh
-npm i -S statofu
+npm i -S statofu # yarn or pnpm also works
 ```
 
-Or, the UMD format can be loaded directly from an npm CDN:
+Or, the UMD format can be loaded from an npm CDN instead:
 
 ```html
 <script src="https://unpkg.com/statofu/dist/statofu.umd.min.js"></script>
@@ -34,9 +44,11 @@ The UMD name is `statofu`.
 
 ## Essentials
 
-### Creating a store
+In Statofu, each kind of state change directly involves a different reducer that accepts one or multiple old states along with zero or more payloads and produces one or multiple new corresponding states. As reducers are pure functions, state changes are predictable. As reducers are directly involved, state changes come at a low cost. The usage is described as follows.
 
-In Statofu, states are managed by a store. The API `createStatofuStore` creates a store:
+### Creating the store
+
+First of all, a Statofu store needs to be created, for which `createStatofuStore` is used:
 
 ```ts
 import { createStatofuStore } from 'statofu';
@@ -46,485 +58,403 @@ const store = createStatofuStore();
 
 ### Defining states
 
-A state in Statofu is defined by a Plain Old JavaScript Object(POJO). A POJO itself is not a state itself but a state definition, (1) hosting a default state value, (2) declaring the state type, and (3) identifying the state it defines:
+Next, states need to be defined, which is simply done by Plain Old JavaScript Object(POJO)s. A POJO, as a state definition, simultaneously, for a state, (1) holds the default state value, (2) declares the state type, and (3) indexes the current state value in a store. Here are two example state definitions, one for a selectable item panel, and the other for a hideable text editor:
 
-```ts
-interface CheckboxState {
-  checked: boolean;
-  highlighted: boolean;
+```tsx
+interface ItemPanelState {
+  itemList: { id: string; text: string }[];
+  selectedItemId: string | undefined;
 }
 
-const $checkboxState = {
-  checked: false,
-  highlighted: false,
+const $itemPanelState: ItemPanelState = {
+  itemList: [],
+  selectedItemId: undefined,
 };
 
-interface TextareaState {
+interface TextEditorState {
   text: string;
-  highlighted: boolean;
+  visible: boolean;
 }
 
-const $textareaState = {
+const $textEditorState: TextEditorState = {
   text: '',
-  highlighted: false,
+  visible: false,
 };
 ```
 
-To distinguish state definitions from states by names, a recommended practice is to prefix `$` to state definition names.
+Usually, to distinguish state definitions from state values by names, `$` is prefixed to state definition names.
 
-### Operating states
+### Getting states
 
-Operating states in Statofu means the same as changing states. Operating one state involves a reducer that accepts one old state and optional payloads to return one new state:
+Then, to get state values, `store.snapshot` is used. It accepts one or multiple state definitions and returns the current one or multiple corresponding state values indexed by the state definitions:
 
 ```ts
-function check(state: CheckboxState): CheckboxState {
-  return { ...state, checked: true };
+const { itemList, selectedItemId } = store.snapshot($itemPanelState);
+const { text, visible } = store.snapshot($textEditorState);
+const [itemPanelState, textEditorState] = store.snapshot([$itemPanelState, $textEditorState]);
+```
+
+By the way, before a state is changed, its state value is the shallow copy of the default state value held by its state definition.
+
+### Changing states
+
+Now, let's dive into state changes. In Statofu, each kind of state change directly involves a different reducer. For changing one state, a reducer that accepts one old state along with zero or more payloads and produces one new corresponding state is involved. Here are three example reducers, two for changing `$itemPanelState`, and one for changing `$textEditorState`:
+
+```tsx
+function selectItem(state: ItemPanelState, itemIdToSelect: string): ItemPanelState {
+  return { ...state, selectedItemId: itemIdToSelect };
 }
 
-function setText(state: TextareaState, text: string): TextareaState {
+function unselectItem(state: ItemPanelState): ItemPanelState {
+  return { ...state, selectedItemId: undefined };
+}
+
+function setText(state: TextEditorState, text: string): TextEditorState {
   return { ...state, text };
 }
-
-store.operate($checkboxState, check); // { checked: true, highlighted: false }
-store.operate($textareaState, setText, 'Lorem ipsum'); // { text: 'Lorem ipsum', highlighted: false }
 ```
 
-Operating multiple states involves a reducer that accepts a tuple of multiple old states and optional payloads to produce a tuple of multiple new states in the same order:
+For changing multiple states, a reducer that accepts multiple old states along with zero or more payloads and produces multiple new corresponding states is involved. Here is an example reducer for changing `$itemPanelState` and `$textEditorState`:
 
-```ts
-function uncheckWithTextCleaned([checkboxState, textareaState]: [CheckboxState, TextareaState]): [
-  CheckboxState,
-  TextareaState
+```tsx
+function submitTextForSelectedItem([textEditor, itemPanel]: [TextEditorState, ItemPanelState]): [
+  TextEditorState,
+  ItemPanelState
 ] {
   return [
-    { ...checkboxState, checked: false },
-    { ...textareaState, text: '' },
+    { ...textEditor, visible: false },
+    {
+      ...itemPanel,
+      itemList: itemPanel.itemList.map((item) => {
+        if (item.id === itemPanel.selectedItemId) {
+          return { ...item, text: textEditor.text };
+        } else {
+          return item;
+        }
+      }),
+      selectedItemId: undefined,
+    },
   ];
 }
-
-store.operate([$checkboxState, $textareaState], uncheckWithTextCleaned); // [{ checked: false, highlighted: false }, { text: '', highlighted: false }]
 ```
 
-By the way, there is no limitation to either the count or the types of payloads in a reducer:
+With reducers ready, to involve them to change states, `store.operate` is used:
 
 ```ts
-function setTextVariously(
-  state: TextareaState,
-  s: string,
-  n: number,
-  b: boolean,
-  f: () => string
-): TextareaState {
-  return { ...state, text: `${s} ${n} ${b} ${f()}` };
-}
+store.operate($itemPanelState, selectItem, 'ed3a06a1');
 
-store.operate($textareaState, setTextVariously, 'Lorem ipsum', 0, false, () => 'dolor sit amet'); // { text: 'Lorem ipsum 0 false dolor sit amet', highlighted: false }
+store.operate($itemPanelState, unselectItem);
+
+store.operate($textEditorState, setText, 'Nulla fermentum aliquet ornare.');
+
+store.operate([$textEditorState, $itemPanelState], submitTextForSelectedItem);
 ```
 
-Another tip is, as reducers are just pure functions, a reducer can directly call another reducer without side effects as long as the final states make sense:
+Inside a call of an operating function, the current state values indexed by the state definitions are passed into the reducer to produce the next state values which are, in turn, saved to the store.
+
+### Subscribing
+
+Thereafter, to respond when states change, `store.subscribe` is used. It accepts one state definition along with a one-state change listener, multiple state definitions along with a multiple-state change listener, or no state definition but an any-state change listener and returns the corresponding unsubscribing function:
 
 ```ts
-function checkWithHighlighted(state: CheckboxState): CheckboxState {
-  return { ...check(state), highlighted: true };
-}
+// #1, subscribing to the changes of `$itemPanelState`.
+const unsubscribeNo1 = store.subscribe($itemPanelState, (newState, oldState) => {});
 
-function checkWithTextCleaned([checkboxState, textareaState]: [CheckboxState, TextareaState]): [
-  CheckboxState,
-  TextareaState
-] {
-  return [check(checkboxState), { ...textareaState, text: '' }];
-}
+// #2, subscribing to the changes of `$textEditorState`.
+const unsubscribeNo2 = store.subscribe($textEditorState, (newState, oldState) => {});
 
-store.operate($checkboxState, checkWithHighlighted); // { checked: true, highlighted: true }
-store.operate([$checkboxState, $textareaState], checkWithTextCleaned); // [{ checked: true, highlighted: true }, { text: '', highlighted: false }]
-```
-
-### Snapshotting states
-
-Snapshotting states in Statofu means the same as getting states. It's doable to snapshot either one or multiple states:
-
-```ts
-const checkboxState1 = store.snapshot($checkboxState);
-const textareaState1 = store.snapshot($textareaState);
-const [checkboxState2, textareaState2] = store.snapshot([$checkboxState, $textareaState]);
-```
-
-Selectors can be used to derive data in Statofu. A selector is a pure function that accepts either one or multiple states and optional payloads to produce a value as a derived datum:
-
-```ts
-function selectIsChecked(state: CheckboxState): boolean {
-  return state.checked;
-}
-
-function selectDoesTextInclude(state: TextareaState, searchText: string): boolean {
-  return state.text.includes(searchText);
-}
-
-function selectIsAnyHighlighted([checkboxState, textareaState]: [
-  CheckboxState,
-  TextareaState
-]): boolean {
-  return checkboxState.highlighted || textareaState.highlighted;
-}
-
-const isChecked = store.snapshot($checkboxState, selectIsChecked);
-const doesTextIncludeLorem = store.snapshot($textareaState, selectDoesTextInclude, 'Lorem');
-const isAnyHighlighted = store.snapshot([$checkboxState, $textareaState], selectIsAnyHighlighted);
-```
-
-### Subscribing states changes
-
-Statofu supports subscribing to (1) one-state, (2) multiple-state, or (3) any-state changes. When one state gets operated and the new state goes referentially different(`!==`) from the old state, one-state change listeners on the one, multiple-state change listeners on some multiple states containing the one, and all any-state change listeners get called once:
-
-```ts
-// (1)
-function onCheckboxStateChange(newState: CheckboxState, oldState: CheckboxState): void {}
-
-// (2)
-function onTextareaStateChange(newState: TextareaState, oldState: TextareaState): void {}
-
-// (3)
-function onCheckboxTextareaStatesChange(
-  [newCheckboxState, newTextareaState]: [CheckboxState, TextareaState],
-  [oldCheckboxState, oldTextareaState]: [CheckboxState, TextareaState]
-): void {}
-
-// (4)
-function onAnyStateChange(
-  newStates: OneOrMulti<StatofuState>,
-  oldStates: OneOrMulti<StatofuState>
-): void {}
-
-const unsubscribeNo1 = store.subscribe($checkboxState, onCheckboxStateChange);
-const unsubscribeNo2 = store.subscribe($textareaState, onTextareaStateChange);
+// #3, subscribing to the changes of `$itemPanelState` and `$textEditorState`.
 const unsubscribeNo3 = store.subscribe(
-  [$checkboxState, $textareaState],
-  onCheckboxTextareaStatesChange
+  [$itemPanelState, $textEditorState],
+  ([newItemPanel, newTextEditor], [oldItemPanel, oldTextEditor]) => {}
 );
-const unsubscribeNo4 = store.subscribe(onAnyStateChange);
 
-store.operate($checkboxState, check); // Listeners #1, #3 and #4 get called once
-store.operate($textareaState, setText, 'Lorem ipsum'); // Listeners #2, #3 and #4 get called once
+// #4, subscribing to the changes of any states.
+const unsubscribeNo4 = store.subscribe((newStates, oldStates) => {});
 ```
 
-When multiple states get operated and at least one of the new states goes referentially different(`!==`) from that of the old states, one-state change listeners on some one state contained by the changed parts, multiple-state change listeners on some multiple states intersecting with the changed parts, and all any-state change listeners get called once:
+When certain states go referentially different by a call of `store.operate`, one-state change listeners on one of them, multi-state change listeners on the states intersecting with them, and all any-state change listeners get called:
 
 ```ts
-store.operate([$checkboxState, $textareaState], uncheckWithTextCleaned); // Listeners #1, #2, #3 and #4 get called once
+// As $itemPanelState changes, listeners of #1, #3, #4 get called.
+store.operate($itemPanelState, selectItem, itemId);
+
+// As $textEditorState and $itemPanelState change, listeners of #1, #2 #3, #4 get called.
+store.operate([$textEditorState, $itemPanelState], submitTextForSelectedItem);
 ```
 
-To unsubscribe from state changes, it's doable by calling either `store.unsubscribe` or the callback returned by `store.subscribe`. If only states are specified on calling `store.unsubscribe`, all listeners on the specified states' changes go deactivated. But notice that, deactivating all listeners on one-state changes doesn't affect any listeners on multiple-state changes and vice versa.
+### Deriving data
+
+Furthermore, to derive data from states, a selector that accepts one or multiple states along with zero or more payloads and calculates a value can be used in combination with `store.snapshot` or `store.subscribe`. Selectors can be named functions:
+
+```ts
+function getSelectedItem(state: ItemPanelState): ItemPanelState['itemList'][number] | undefined {
+  return state.itemList.find(({ id }) => id === state.selectedItemId);
+}
+
+function getRelatedItems([itemPanel, textEditor]: [
+  ItemPanelState,
+  TextEditorState
+]): ItemPanelState['itemList'] {
+  return itemPanel.itemList.filter(({ text }) => text.includes(textEditor.text));
+}
+
+function getTextWithFallback(state: TextEditorState, fallback: string): string {
+  return state.text || fallback;
+}
+
+function isVisible(state: TextEditorState): boolean {
+  return state.visible;
+}
+
+const selectedItem = store.snapshot($itemPanelState, getSelectedItem);
+const relatedItems = store.snapshot([$itemPanelState, $textEditorState], getRelatedItems);
+const textWithFallback = store.snapshot($textEditorState, getTextWithFallback, 'Not Available');
+const visible = store.snapshot($textEditorState, isVisible);
+
+store.subscribe([$itemPanelState, $textEditorState], ([itemPanel, textEditor]) => {
+  const selectedItem = getSelectedItem(itemPanel);
+  const relatedItems = getRelatedItems([itemPanel, textEditor]);
+  const textWithFallback = getTextWithFallback(textEditor, 'Not Available');
+  const visible = isVisible(textEditor);
+});
+```
+
+Also, selectors can be anonymous functions:
+
+```ts
+const selectedItemId = store.snapshot($itemPanelState, (state) => state.selectedItemId);
+```
 
 ## Recipes
 
-### Recommended code structure
+### Code Structure
 
-Usually, when a state management library is used, you are going to manage states across UI components. A set of UI components that share states constitute a UI module or a frontend app. Assuming there is a standalone directory hosting a module/app, a standalone file can be created per state in it for hosting (1) a state definition, (2) available reducers, and (3) available selectors. In case there are many state files, another directory can be created in the module/app directory for hosting them. This approach helps understand each state more easily:
+In Statofu, the management of a state consists of (1) a state definition, (2) zero or more reducers, and (3) zero or more selectors. So, a recommended practice is to place the three parts of a state sequentially into one file, which leads to good maintainability. (In addition, as there are only POJOs and pure functions in each file, this code structure also leads to good portability.) Let's reorganize the states in Essentials for an example:
 
-```ts
-// SomeModule/states/CheckboxState.ts
-export interface CheckboxState {
-  checked: boolean;
-  highlighted: boolean;
+```tsx
+// states/ItemPanelState.ts
+import type { TextEditorState } from './TextEditorState';
+
+export interface ItemPanelState {
+  itemList: { id: string; text: string }[];
+  selectedItemId: string | undefined;
 }
 
-export const $checkboxState = {
-  checked: false,
-  highlighted: false,
+export const $itemPanelState: ItemPanelState = {
+  itemList: [],
+  selectedItemId: undefined,
 };
 
-export function check(state: CheckboxState): CheckboxState {
-  return { ...state, checked: true };
+export function selectItem(state: ItemPanelState, itemIdToSelect: string): ItemPanelState {
+  // ...
 }
 
-// More reducers ...
-
-export function selectIsChecked(state: CheckboxState): boolean {
-  return state.checked;
+export function unselectItem(state: ItemPanelState): ItemPanelState {
+  // ...
 }
 
-// More selectors ...
+export function getSelectedItem(
+  state: ItemPanelState
+): ItemPanelState['itemList'][number] | undefined {
+  // ...
+}
+
+export function getRelatedItems([itemPanel, textEditor]: [
+  ItemPanelState,
+  TextEditorState
+]): ItemPanelState['itemList'] {
+  // ...
+}
 ```
 
-```ts
-// SomeModule/states/TextareaState.ts
-export interface TextareaState {
+```tsx
+// states/TextEditorState.ts
+import type { ItemPanelState } from './ItemPanelState';
+
+export interface TextEditorState {
   text: string;
-  highlighted: boolean;
+  visible: boolean;
 }
 
-export const $textareaState = {
+export const $textEditorState: TextEditorState = {
   text: '',
-  highlighted: false,
+  visible: false,
 };
 
-export function setText(state: TextareaState, text: string): TextareaState {
-  return { ...state, text };
-}
-
-// More reducers ...
-
-export function selectDoesTextInclude(state: TextareaState, searchText: string): boolean {
-  return state.text.includes(searchText);
-}
-
-// More selectors ...
-```
-
-Afterward, a store needs to be created on the module/app initialized (and cleared on the module/app destroyed). Besides, the store needs to be made accessible to the components in the module/app, so that you can use the store in any component with exports from the state files for state management:
-
-```ts
-// SomeModule/SomePseudoComponent.ts
-import {
-  $checkboxState,
-  check,
-  selectIsChecked,
-  uncheckWithTextCleaned,
-} from './states/CheckboxState';
-import { $textareaState, selectDoesTextInclude, setText } from './states/TextareaState';
-
-// Events handlers
-
-function onCheckboxToggle(checked: boolean): void {
-  if (checked) {
-    store.operate($checkboxState, check);
-  } else {
-    store.operate([$checkboxState, $textareaState], uncheckWithTextCleaned);
-  }
-}
-
-function onTextareaChange(text: string): void {
-  store.operate($textareaState, setText, text);
-}
-
-// Rendering
-
-function renderCheckbox(/* ... */): Element {
-  const { checked, highlighted } = store.snapshot($checkboxState);
-
+export function setText(state: TextEditorState, text: string): TextEditorState {
   // ...
 }
 
-function renderTextarea(/* ... */): Element {
-  const { text, highlighted } = store.snapshot($textareaState);
-  const isChecked = store.snapshot($checkboxState, selectIsChecked);
-
+export function submitTextForSelectedItem([textEditor, itemPanel]: [
+  TextEditorState,
+  ItemPanelState
+]): [TextEditorState, ItemPanelState] {
   // ...
 }
 
-function renderTodoHint(/* ... */): Element {
-  const doesTextIncludeTODO = store.snapshot($textareaState, selectDoesTextInclude, 'TODO');
-
+export function getTextWithFallback(state: TextEditorState, fallback: string): string {
   // ...
 }
 
-function onComponentInitialized(): void {
-  store.subscribe([$checkboxState, $textareaState], (/* ... */) => {
-    rerender(/* ... */);
-  });
+export function isVisible(state: TextEditorState): boolean {
+  // ...
 }
-
-// More UI logics ...
 ```
 
-### Integration with React
+### Server-side rendering(SSR)
 
-Statofu is designed as framework-agnostic and works with any framework. To integrate Statofu with a framework, there are only 3 points to be handled, (1) binding a store's lifecycle with a module/app's, (2) making the store accessible to the components in the module/app and (3) having latest states observed promptly for rendering. A preliminary demo of integrating Statofu with React looks as below:
+In general, SSR needs 2 steps. (1) On the server side, states are prepared as per a page request, an HTML body is rendered with the states, and the states are serialized afterward. Then, the two are piped into the response. (2) On the client side, the server-serialized states are deserialized, then components are rendered with the states to properly hydrate the server-rendered HTML body.
+
+To help with SSR, Statofu provides helpers of bulk reading to-serialize states from a store and bulk writing deserialized states to a store. But, serialization/deserialization is beyond the scope because it's easily doable via a more specialized library such as `serialize-javascript` or some built-in features of a full-stack framework such as data fetching of `next`.
+
+Here is a semi-pseudocode example for SSR with Statofu. Firstly, `serialize-javascript` is installed for serialization/deserialization:
+
+```sh
+npm i -S serialize-javascript
+```
+
+Next, on the server side:
 
 ```tsx
-// StatofuReact.tsx
-import { createStatofuStore, OneOrMulti, StatofuState, StatofuStore } from 'statofu';
+import { renderToString } from 'react-dom/server';
+import serialize from 'serialize-javascript';
+import { createStatofuState } from 'statofu';
+import { StoreProvider } from 'statofu-react';
+import { foldStates } from 'statofu/ssr';
 
-// For point #1
-export function useBindStore(): StatofuStore {
-  const refStore = useRef<StatofuStore | null>(null);
+app.get('/some-page', (req, res) => {
+  const store = createStatofuState();
 
-  if (!refStore.current) {
-    refStore.current = createStatofuStore();
-  }
+  const itemPanelState = prepareItemPanelState(req);
+  store.operate($itemPanelState, itemPanelState);
 
-  useEffect(() => {
-    const store = refStore.current;
-    return () => {
-      if (store) {
-        store.clear();
-      }
-    };
-  }, []);
+  const textEditorState = prepareItemPanelState(req);
+  store.operate($textEditorState, textEditorState);
 
-  return refStore.current;
-}
+  const htmlBody = renderHtmlBodyAsString(store);
 
-// For point #2
-const StoreContext = createContext<StatofuStore | null>(null);
+  const stateFolder = foldStates(store, { $itemPanelState, $textEditorState });
 
-export function StoreProvider({ children }: PropsWithChildren): ReactElement {
-  const store = useBindStore();
-  return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
-}
-
-export function useStore(): StatofuStore {
-  const store = useContext(StoreContext);
-
-  if (!store) {
-    throw new Error('Store not found');
-  }
-
-  return store;
-}
-
-// For point #3
-export function useSnapshot<TStates extends OneOrMulti<StatofuState>>($states: TStates): TStates {
-  const store = useStore();
-
-  const subscribeStates = useCallback(
-    (listener: () => void) => store.subscribe($states, listener),
-    [$states, store]
-  );
-
-  return useSyncExternalStore(subscribeStates, () => store.snapshot($states));
-}
+  res.send(`
+...
+<script>window.SERIALIZED_STATE_FOLDER='${serialize(stateFolder)}'</script>
+...
+<div id="root">${htmlBody}</div>
+...`);
+});
 ```
 
-Then, the use of this demo integration feels as below:
+Afterward, on the client side:
 
 ```tsx
-// SomeModule/TheRootComponent.tsx
-import { StoreProvider } from '../StatofuReact';
-import { SomeOtherComponent } from './SomeOtherComponent';
+import { createStatofuState } from 'statofu';
+import { unfoldStates } from 'statofu/ssr';
 
-export function TheRootComponent(): ReactElement {
-  return (
-    <StoreProvider>
-      {/* ... */}
-      <SomeOtherComponent />
-      {/* ... */}
-    </StoreProvider>
-  );
-}
+// ...
+
+const stateFolder = eval(`(${window.SERIALIZED_STATE_FOLDER})`);
+
+delete window.SERIALIZED_STATE_FOLDER;
+
+const store = createStatofuState();
+
+unfoldStates(store, { $itemPanelState, $textEditorState }, stateFolder);
+
+hydrateServerRenderedHtmlBody(store);
 ```
 
-```tsx
-// SomeModule/SomeOtherComponent.tsx
-import { useSnapshot, useStore } from '../StatofuReact';
-
-export function SomeOtherComponent(): ReactElement {
-  const store = useStore();
-  const [checkboxState, textareaState] = useSnapshot([$checkboxState, $textareaState]);
-
-  const onCheckboxToggle = useCallback(
-    (checked: boolean): void => {
-      if (checked) {
-        store.operate($checkboxState, check);
-      } else {
-        store.operate([$checkboxState, $textareaState], uncheckWithTextCleaned);
-      }
-    },
-    [store]
-  );
-
-  const onTextareaChange = useCallback(
-    (text: string): void => {
-      store.operate($textareaState, setText, text);
-    },
-    [store]
-  );
-
-  return (
-    <div>
-      {/* ... */}
-      <Checkbox {...checkboxState} onToggle={onCheckboxToggle} />
-      {/* ... */}
-      <Textarea {...textareaState} onChange={onTextareaChange} />
-      {/* ... */}
-    </div>
-  );
-}
-```
-
-Currently, Statofu's official support for integrations with different frameworks is still in progress. For React, it's [statofu-react](https://github.com/statofu/statofu-react). For Vue, it's [statofu-vue](https://github.com/statofu/statofu-vue). The naming convention is `statofu-{{framework}}`. If you find yourself interested in the integrations, we may do it together.
+Note that, this example can be optimized in different ways like rendering the HTML body as a stream. When using it in the real world, we should tailor it to real-world needs.
 
 ## APIs
 
 ### `createStatofuStore`
 
-Creates a Statofu store.
+The function to create a store:
 
 ```ts
 const store = createStatofuStore();
 ```
 
-### `store.operate`
+#### `store.snapshot`
 
-Operates either one or multiple states with a reducer and the required payloads of the reducer. The latest states are returned.
+The method to get state values:
 
 ```ts
-const checkboxState1 = store.operate($checkboxState, check);
-const textareaState1 = store.operate($textareaState, setText, 'Lorem ipsum');
-const [checkboxState2, textareaState2] = store.operate(
-  [$checkboxState, $textareaState],
-  uncheckWithTextCleaned
-);
+const { itemList, selectedItemId } = store.snapshot($itemPanelState);
+const { text, visible } = store.snapshot($textEditorState);
+const [itemPanelState, textEditorState] = store.snapshot([$itemPanelState, $textEditorState]);
 ```
 
-### `store.snapshot`
-
-Snapshots either one or multiple states optionally with a selector and the required payloads of the selector.
+It can accept selectors:
 
 ```ts
-const checkboxState1 = store.snapshot($checkboxState);
-const textareaState1 = store.snapshot($textareaState);
-const [checkboxState2, textareaState2] = store.snapshot([$checkboxState, $textareaState]);
+const selectedItem = store.snapshot($itemPanelState, getSelectedItem);
+const relatedItems = store.snapshot([$itemPanelState, $textEditorState], getRelatedItems);
+const textWithFallback = store.snapshot($textEditorState, getTextWithFallback, 'Not Available');
+const visible = store.snapshot($textEditorState, isVisible);
+const selectedItemId = store.snapshot($itemPanelState, (state) => state.selectedItemId);
+```
 
-const isChecked = store.snapshot($checkboxState, selectIsChecked);
-const doesTextIncludeLorem = store.snapshot($textareaState, selectDoesTextInclude, 'Lorem');
-const isAnyHighlighted = store.snapshot([$checkboxState, $textareaState], selectIsAnyHighlighted);
+### `store.operate`
+
+The method to change states by involving reducers:
+
+```ts
+store.operate($itemPanelState, selectItem, 'ed3a06a1');
+
+store.operate($itemPanelState, unselectItem);
+
+store.operate($textEditorState, setText, 'Nulla fermentum aliquet ornare.');
+
+store.operate([$textEditorState, $itemPanelState], submitTextForSelectedItem);
 ```
 
 ### `store.subscribe`
 
-Subscribes to one-state, multiple-state or any-state changes with a listener, then returns the callback for deactivating the listener. The listener gets called once with the new states and the old states when at least one of the states in the subscription goes referentially different(`!==`) by a call of `store.operate`. For the unchanged parts of the states in the subscription, their new states stay referentially identical(`===`) to their old states on the listener called. Notice that, when a listener on any-state changes gets called, the new states and the old states passed into it vary in terms of what states are operated by a call of `store.operate`.
+The method to subscribe to state changes. It returns the corresponding unsubscribing function:
 
 ```ts
-const unsubscribeCheckboxStateChanges = store.subscribe(
-  $checkboxState,
-  (newState: CheckboxState, oldState: CheckboxState): void => {
-    // ...
-  }
+// #1, subscribing to the changes of `$itemPanelState`.
+const unsubscribeNo1 = store.subscribe($itemPanelState, (newState, oldState) => {});
+
+// #2, subscribing to the changes of `$textEditorState`.
+const unsubscribeNo2 = store.subscribe($textEditorState, (newState, oldState) => {});
+
+// #3, subscribing to the changes of `$itemPanelState` and `$textEditorState`.
+const unsubscribeNo3 = store.subscribe(
+  [$itemPanelState, $textEditorState],
+  ([newItemPanel, newTextEditor], [oldItemPanel, oldTextEditor]) => {}
 );
-const unsubscribeCheckboxTextareaStatesChanges = store.subscribe(
-  [$checkboxState, $textareaState],
-  (
-    [newCheckboxState, newTextareaState]: [CheckboxState, TextareaState],
-    [oldCheckboxState, oldTextareaState]: [CheckboxState, TextareaState]
-  ): void => {
-    // ...
-  }
-);
-const subscribeAnyStateChanges = store.subscribe(
-  (newStates: OneOrMulti<StatofuState>, oldStates: OneOrMulti<StatofuState>): void => {
-    // ...
-  }
-);
+
+// #4, subscribing to the changes of any states.
+const unsubscribeNo4 = store.subscribe((newStates, oldStates) => {});
 ```
 
 ### `store.unsubscribe`
 
-Unsubscribes from states changes. If both states and a listener are specified, only the specified listener goes deactivated on the states changes. If only states are specified, all listeners on the specified states' changes go deactivated. If nothing is specified, all listeners on all kinds of states' changes go deactivated.
+The method to unsubscribe from state changes. The more params are specified, the more limited the effect is:
 
 ```ts
-store.unsubscribe($checkboxState, onCheckboxStateChange);
-store.unsubscribe([$checkboxState, $textareaState], onCheckboxTextareaStatesChange);
-store.unsubscribe(onAnyStateChange);
+// All listeners on the changes of `$itemPanelState` go detached.
+store.unsubscribe($itemPanelState);
 
-store.unsubscribe($checkboxState);
-store.unsubscribe([$checkboxState, $textareaState]);
+// All listeners on the changes of `$itemPanelState` and `$textEditorState` go detached.
+store.unsubscribe([$itemPanelState, $textEditorState]);
+
+// Only the specified listener on the changes of `$itemPanelState` goes detached.
+store.unsubscribe($itemPanelState, handleItemPanelStateChange);
+
+// Only the specified listener on the changes of any states goes detached.
+store.unsubscribe(handleAnyStateChange);
+
+// All listeners on one, multiple, or any states go detached.
 store.unsubscribe();
 ```
 
 ### `store.clear`
 
-Clears everything in a store, including states and listeners, as if the store is newly created.
+The function to clear everything in the store:
 
 ```ts
 store.clear();
@@ -532,16 +462,15 @@ store.clear();
 
 ## About the name
 
-Since the modernization in frontend development started, state management has been a pain to do.
-It is, in nature, just reading and writing some data for certain use in a frontend app. It is supposed to be fun but not frustrated.
+Since the early days of modern frontend development, state management has been a pain. But in nature, it is just reading and writing data for some specific needs in a frontend app. It shouldn't be so frustrating but should be fun.
 
-The name "Statofu" means bringing **state** management back **to** **fu**n, which is also the goal of Statofu. Having fun in state management helps us do it better. In return, better-done state management leads to a better frontend app.
+The name "Statofu" means bringing **state** management back **to** **fu**n, which is also the ultra goal of Statofu. Having fun in state management helps us do it better. In return, better-done state management leads to a better frontend app.
 
-The name "Statofu" is pronounced as a concatenation of the words state and tofu, which is [ˈsteitəʊfu]. By the way, tofu, as food with a history of over 2000 years, tastes smooth and benefits health, which accords with Statofu, too.
+The name "Statofu" is pronounced as a concatenation of the words state and tofu, which is [ˈsteitəʊfu]. By the way, tofu, a food with a history of over 2000 years, tastes smooth and benefits health, which accords with Statofu, too.
 
 ## Contributing
 
-If you find any bugs or have any thoughts, you're always welcome to [open an issue](https://github.com/statofu/statofu/issues) or DM me on [Twitter](https://twitter.com/licg9999) or [Wechat](./assets/ed0458952a4930f1aeebd01da0127de240c85bbf.jpg). Looking forward to hearing from you 🔥.
+For any bugs or any thoughts, welcome to [open an issue](https://github.com/statofu/statofu-react/issues), or just DM me on [Twitter](https://twitter.com/licg9999) / [Wechat](./assets/ed0458952a4930f1aeebd01da0127de240c85bbf.jpg).
 
 ## License
 
